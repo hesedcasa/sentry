@@ -3,10 +3,10 @@ import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
 
-describe('org:issues', () => {
-  let OrgIssues: any
+describe('issue:tag', () => {
+  let IssueTag: any
   let readConfigStub: SinonStub
-  let listOrgIssuesStub: SinonStub
+  let getTagDetailsStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
@@ -14,33 +14,27 @@ describe('org:issues', () => {
     auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
-  const mockResult = {
-    data: [
-      {id: '1', title: 'Error A'},
-      {id: '2', title: 'Error B'},
-    ],
-    success: true,
-  }
+  const mockResult = {data: {key: 'browser', totalValues: 42}, success: true}
 
   beforeEach(async () => {
     readConfigStub = stub().resolves(mockConfig)
-    listOrgIssuesStub = stub().resolves(mockResult)
+    getTagDetailsStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
+    const imported = await esmock('../../../../src/commands/sentry/issue/tag.js', {
       '../../../../src/config.js': {readConfig: readConfigStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
-        listOrgIssues: listOrgIssuesStub,
+        getTagDetails: getTagDetailsStub,
       },
     })
-    OrgIssues = imported.default
+    IssueTag = imported.default
   })
 
-  it('calls listOrgIssues with correct args and outputs JSON', async () => {
-    const cmd = new OrgIssues([], {
+  it('calls getTagDetails with correct args and outputs JSON', async () => {
+    const cmd = new IssueTag(['123456789', 'browser'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -49,15 +43,17 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(getTagDetailsStub.calledOnce).to.be.true
+    expect(getTagDetailsStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(getTagDetailsStub.firstCall.args[1]).to.equal('123456789')
+    expect(getTagDetailsStub.firstCall.args[2]).to.equal('browser')
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('passes optional flags correctly', async () => {
-    const cmd = new OrgIssues(['--query', 'is:unresolved', '--limit', '25'], {
+  it('passes environment flag correctly', async () => {
+    const cmd = new IssueTag(['123456789', 'browser', '--environment', 'production'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -65,16 +61,14 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    const params = listOrgIssuesStub.firstCall.args[1]
-    expect(params.query).to.equal('is:unresolved')
-    expect(params.limit).to.equal(25)
+    const params = getTagDetailsStub.firstCall.args[3]
+    expect(params.environment).to.deep.equal(['production'])
   })
 
   it('returns early when config is missing', async () => {
     readConfigStub.resolves(null)
 
-    const cmd = new OrgIssues([], {
+    const cmd = new IssueTag(['123456789', 'browser'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -83,13 +77,13 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.called).to.be.false
+    expect(getTagDetailsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
-    const cmd = new OrgIssues(['--toon'], {
+    const cmd = new IssueTag(['123456789', 'browser', '--toon'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -97,7 +91,8 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
+    expect(getTagDetailsStub.calledOnce).to.be.true
+    expect(getTagDetailsStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789', 'browser', {}])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

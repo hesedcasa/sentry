@@ -1,104 +1,86 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import {type SinonStub, stub} from 'sinon'
 
-import {createMockConfig} from '../../../helpers/config-mock.js'
-
-describe('sentry:auth:test', () => {
+describe('auth:test', () => {
   let AuthTest: any
-  let mockReadConfig: any
-  let mockTestConnection: any
-  let mockClearClients: any
-  let mockAction: any
-  let logMessages: string[]
+  let readConfigStub: SinonStub
+  let testConnectionStub: SinonStub
+  let clearClientsStub: SinonStub
+  let actionStartStub: SinonStub
+  let actionStopStub: SinonStub
 
-  const mockAuth = {
-    authToken: 'test-token',
-    host: 'https://sentry.io/api/0',
-    organization: 'test-org',
+  const mockConfig = {
+    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
   beforeEach(async () => {
-    logMessages = []
+    readConfigStub = stub().resolves(mockConfig)
+    testConnectionStub = stub()
+    clearClientsStub = stub()
+    actionStartStub = stub()
+    actionStopStub = stub()
 
-    mockReadConfig = async () => ({auth: mockAuth})
-
-    mockTestConnection = async () => ({
-      data: {organization: 'test-org'},
-      success: true,
-    })
-
-    mockClearClients = () => {}
-
-    mockAction = {
-      start() {},
-      stop() {},
-    }
-
-    AuthTest = await esmock('../../../../src/commands/sentry/auth/test.js', {
-      '../../../../src/config.js': {readConfig: mockReadConfig},
+    const imported = await esmock('../../../../src/commands/sentry/auth/test.js', {
+      '../../../../src/config.js': {readConfig: readConfigStub},
       '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
       },
-      '@oclif/core/ux': {action: mockAction},
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
     })
+    AuthTest = imported.default
   })
 
-  it('reports successful connection', async () => {
-    const command = new AuthTest.default([], createMockConfig())
+  it('shows success on valid connection', async () => {
+    testConnectionStub.resolves({data: {organization: 'test-org'}, success: true})
 
-    command.log = (msg: string) => {
-      logMessages.push(msg)
-    }
+    const cmd = new AuthTest([], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
 
-    const result = await command.run()
+    const result = await cmd.run()
 
+    expect(readConfigStub.calledOnce).to.be.true
+    expect(testConnectionStub.calledWith(mockConfig.auth)).to.be.true
+    expect(clearClientsStub.calledOnce).to.be.true
+    expect(actionStopStub.calledWith('✓ successful')).to.be.true
+    expect(logStub.calledWith('Successful connection to Sentry')).to.be.true
     expect(result.success).to.be.true
-    expect(logMessages).to.include('Successful connection to Sentry')
   })
 
-  it('returns error when config is missing', async () => {
-    mockReadConfig = async () => {}
+  it('shows error on failed connection', async () => {
+    testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
-    AuthTest = await esmock('../../../../src/commands/sentry/auth/test.js', {
-      '../../../../src/config.js': {readConfig: mockReadConfig},
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {action: mockAction},
-    })
+    const cmd = new AuthTest([], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+    const errorStub = stub(cmd, 'error')
 
-    const command = new AuthTest.default([], createMockConfig())
-    command.log = () => {}
+    await cmd.run()
 
-    const result = await command.run()
+    expect(actionStopStub.calledWith('✗ failed')).to.be.true
+    expect(errorStub.calledWith('Failed to connect to Sentry.')).to.be.true
+  })
+
+  it('returns error result when config is missing', async () => {
+    readConfigStub.resolves(null)
+
+    const cmd = new AuthTest([], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+
+    const result = await cmd.run()
 
     expect(result.success).to.be.false
-  })
-
-  it('calls clearClients after execution', async () => {
-    let clearClientsCalled = false
-    mockClearClients = () => {
-      clearClientsCalled = true
-    }
-
-    AuthTest = await esmock('../../../../src/commands/sentry/auth/test.js', {
-      '../../../../src/config.js': {readConfig: mockReadConfig},
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {action: mockAction},
-    })
-
-    const command = new AuthTest.default([], createMockConfig())
-    command.log = () => {}
-
-    await command.run()
-
-    expect(clearClientsCalled).to.be.true
+    expect(result.error).to.equal('Missing authentication config')
+    expect(testConnectionStub.called).to.be.false
   })
 })

@@ -148,12 +148,42 @@ Authentication config is stored in JSON at `~/.config/sentry/sentry-config.json`
 ## Testing
 
 - Tests mirror source structure in `test/` directory
-- Mocha + Chai for testing
-- `esmock` for mocking dependencies
+- Mocha + Chai + `sinon` for testing (sinon stubs for all dependency mocking)
+- `esmock` for mocking ES module dependencies — paths in `esmock()` calls must use `.js` extensions even though source files are `.ts`
 - Tests use `ts-node` for TypeScript execution (see `.mocharc.json`)
 - 60-second timeout for all tests
-- Use `createMockConfig()` from `test/helpers/config-mock.ts` to mock oclif's `Config` object
+- `npm run test:coverage` — run with c8 coverage (50% minimum threshold enforced)
+- `posttest` automatically runs `npm run lint` after tests pass — a clean test run requires lint to pass too
+
+### Test patterns
+
+Commands are instantiated directly with `new CommandClass([...args], {configDir, root, runHook})`:
+
+```typescript
+const cmd = new IssueGet(['123456789', '--toon'], {
+  configDir: '/tmp/test-config',
+  root: process.cwd(),
+  runHook: stub().resolves({failures: [], successes: []}),
+} as any)
+```
+
+All dependencies are mocked via `esmock` with sinon stubs in `beforeEach`:
+
+```typescript
+const imported = await esmock('../../../../src/commands/sentry/issue/get.js', {
+  '../../../../src/config.js': {readConfig: readConfigStub},
+  '../../../../src/sentry/sentry-client.js': {clearClients: clearClientsStub, getIssue: getIssueStub},
+})
+IssueGet = imported.default
+```
+
 - When instantiating a command in tests, **the arg array order must match the `static args` definition order** exactly, since oclif assigns positional args by position
+- `configDir` is needed in the constructor options for any command that calls `readConfig`
+
+### Linting quirks
+
+- The `camelcase` rule flags snake_case parameter names like `exception_idx`/`frame_idx` in `debugSourceMaps`. Use `// eslint-disable-next-line camelcase` on lines that pass these external API params
+- The `unicorn/no-useless-undefined` rule flags `stub.calledWith(undefined)` — use `stub.firstCall.args[0] === undefined` instead
 
 ## Output Formatting
 
@@ -196,5 +226,5 @@ fix: handle connection timeout errors gracefully
 docs: update configuration examples in README
 refactor: extract query string building into helper
 test: add integration tests for sentry API
-chore: remove jira.js dependency
+chore: remove test.js dependency
 ```

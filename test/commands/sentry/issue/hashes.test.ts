@@ -3,10 +3,10 @@ import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
 
-describe('org:issues', () => {
-  let OrgIssues: any
+describe('issue:hashes', () => {
+  let IssueHashes: any
   let readConfigStub: SinonStub
-  let listOrgIssuesStub: SinonStub
+  let listIssueHashesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
@@ -14,33 +14,27 @@ describe('org:issues', () => {
     auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
-  const mockResult = {
-    data: [
-      {id: '1', title: 'Error A'},
-      {id: '2', title: 'Error B'},
-    ],
-    success: true,
-  }
+  const mockResult = {data: [{id: 'hash1'}, {id: 'hash2'}], success: true}
 
   beforeEach(async () => {
     readConfigStub = stub().resolves(mockConfig)
-    listOrgIssuesStub = stub().resolves(mockResult)
+    listIssueHashesStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
+    const imported = await esmock('../../../../src/commands/sentry/issue/hashes.js', {
       '../../../../src/config.js': {readConfig: readConfigStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
-        listOrgIssues: listOrgIssuesStub,
+        listIssueHashes: listIssueHashesStub,
       },
     })
-    OrgIssues = imported.default
+    IssueHashes = imported.default
   })
 
-  it('calls listOrgIssues with correct args and outputs JSON', async () => {
-    const cmd = new OrgIssues([], {
+  it('calls listIssueHashes with correct args and outputs JSON', async () => {
+    const cmd = new IssueHashes(['123456789'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -49,15 +43,16 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(listIssueHashesStub.calledOnce).to.be.true
+    expect(listIssueHashesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(listIssueHashesStub.firstCall.args[1]).to.equal('123456789')
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('passes optional flags correctly', async () => {
-    const cmd = new OrgIssues(['--query', 'is:unresolved', '--limit', '25'], {
+  it('passes cursor flag correctly', async () => {
+    const cmd = new IssueHashes(['123456789', '--cursor', 'abc123'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -65,16 +60,14 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    const params = listOrgIssuesStub.firstCall.args[1]
-    expect(params.query).to.equal('is:unresolved')
-    expect(params.limit).to.equal(25)
+    const params = listIssueHashesStub.firstCall.args[2]
+    expect(params.cursor).to.equal('abc123')
   })
 
   it('returns early when config is missing', async () => {
     readConfigStub.resolves(null)
 
-    const cmd = new OrgIssues([], {
+    const cmd = new IssueHashes(['123456789'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -83,13 +76,13 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.called).to.be.false
+    expect(listIssueHashesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
-    const cmd = new OrgIssues(['--toon'], {
+    const cmd = new IssueHashes(['123456789', '--toon'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -97,7 +90,7 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
+    expect(listIssueHashesStub.calledOnce).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

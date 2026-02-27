@@ -3,10 +3,10 @@ import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
 
-describe('org:issues', () => {
-  let OrgIssues: any
+describe('event:get', () => {
+  let EventGet: any
   let readConfigStub: SinonStub
-  let listOrgIssuesStub: SinonStub
+  let getEventStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
@@ -14,33 +14,27 @@ describe('org:issues', () => {
     auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
-  const mockResult = {
-    data: [
-      {id: '1', title: 'Error A'},
-      {id: '2', title: 'Error B'},
-    ],
-    success: true,
-  }
+  const mockResult = {data: {eventID: 'abc123def456', id: 'abc123def456'}, success: true}
 
   beforeEach(async () => {
     readConfigStub = stub().resolves(mockConfig)
-    listOrgIssuesStub = stub().resolves(mockResult)
+    getEventStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
+    const imported = await esmock('../../../../src/commands/sentry/event/get.js', {
       '../../../../src/config.js': {readConfig: readConfigStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
-        listOrgIssues: listOrgIssuesStub,
+        getEvent: getEventStub,
       },
     })
-    OrgIssues = imported.default
+    EventGet = imported.default
   })
 
-  it('calls listOrgIssues with correct args and outputs JSON', async () => {
-    const cmd = new OrgIssues([], {
+  it('calls getEvent with correct args and outputs JSON', async () => {
+    const cmd = new EventGet(['my-project', 'abc123def456'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -49,32 +43,17 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(getEventStub.calledOnce).to.be.true
+    expect(getEventStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-project', 'abc123def456'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('passes optional flags correctly', async () => {
-    const cmd = new OrgIssues(['--query', 'is:unresolved', '--limit', '25'], {
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
-    stub(cmd, 'logJson')
-
-    await cmd.run()
-
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    const params = listOrgIssuesStub.firstCall.args[1]
-    expect(params.query).to.equal('is:unresolved')
-    expect(params.limit).to.equal(25)
-  })
-
   it('returns early when config is missing', async () => {
     readConfigStub.resolves(null)
 
-    const cmd = new OrgIssues([], {
+    const cmd = new EventGet(['my-project', 'abc123def456'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -83,13 +62,13 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.called).to.be.false
+    expect(getEventStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
-    const cmd = new OrgIssues(['--toon'], {
+    const cmd = new EventGet(['my-project', 'abc123def456', '--toon'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -97,7 +76,8 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
+    expect(getEventStub.calledOnce).to.be.true
+    expect(getEventStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-project', 'abc123def456'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

@@ -3,10 +3,10 @@ import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
 
-describe('org:issues', () => {
-  let OrgIssues: any
+describe('event:source-maps', () => {
+  let EventSourceMaps: any
   let readConfigStub: SinonStub
-  let listOrgIssuesStub: SinonStub
+  let debugSourceMapsStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
@@ -14,33 +14,27 @@ describe('org:issues', () => {
     auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
-  const mockResult = {
-    data: [
-      {id: '1', title: 'Error A'},
-      {id: '2', title: 'Error B'},
-    ],
-    success: true,
-  }
+  const mockResult = {data: {errors: [], exceptions: []}, success: true}
 
   beforeEach(async () => {
     readConfigStub = stub().resolves(mockConfig)
-    listOrgIssuesStub = stub().resolves(mockResult)
+    debugSourceMapsStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
+    const imported = await esmock('../../../../src/commands/sentry/event/source-maps.js', {
       '../../../../src/config.js': {readConfig: readConfigStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
-        listOrgIssues: listOrgIssuesStub,
+        debugSourceMaps: debugSourceMapsStub,
       },
     })
-    OrgIssues = imported.default
+    EventSourceMaps = imported.default
   })
 
-  it('calls listOrgIssues with correct args and outputs JSON', async () => {
-    const cmd = new OrgIssues([], {
+  it('calls debugSourceMaps with correct args and outputs JSON', async () => {
+    const cmd = new EventSourceMaps(['my-project', 'abc123def456'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -49,15 +43,17 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(debugSourceMapsStub.calledOnce).to.be.true
+    expect(debugSourceMapsStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(debugSourceMapsStub.firstCall.args[1]).to.equal('my-project')
+    expect(debugSourceMapsStub.firstCall.args[2]).to.equal('abc123def456')
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('passes optional flags correctly', async () => {
-    const cmd = new OrgIssues(['--query', 'is:unresolved', '--limit', '25'], {
+  it('passes exception-idx and frame-idx flags correctly', async () => {
+    const cmd = new EventSourceMaps(['my-project', 'abc123', '--exception-idx', '0', '--frame-idx', '2'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -65,16 +61,15 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
-    const params = listOrgIssuesStub.firstCall.args[1]
-    expect(params.query).to.equal('is:unresolved')
-    expect(params.limit).to.equal(25)
+    const params = debugSourceMapsStub.firstCall.args[3]
+    expect(params.exception_idx).to.equal('0')
+    expect(params.frame_idx).to.equal('2')
   })
 
   it('returns early when config is missing', async () => {
     readConfigStub.resolves(null)
 
-    const cmd = new OrgIssues([], {
+    const cmd = new EventSourceMaps(['my-project', 'abc123def456'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -83,13 +78,13 @@ describe('org:issues', () => {
     await cmd.run()
 
     expect(readConfigStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.called).to.be.false
+    expect(debugSourceMapsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
-    const cmd = new OrgIssues(['--toon'], {
+    const cmd = new EventSourceMaps(['my-project', 'abc123def456', '--toon'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -97,7 +92,7 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(listOrgIssuesStub.calledOnce).to.be.true
+    expect(debugSourceMapsStub.calledOnce).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

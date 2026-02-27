@@ -1,202 +1,113 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import {type SinonStub, stub} from 'sinon'
 
-import {createMockConfig} from '../../../helpers/config-mock.js'
-
-describe('sentry:auth:add', () => {
+describe('auth:add', () => {
   let AuthAdd: any
-  let mockFs: any
-  let mockTestConnection: any
-  let mockClearClients: any
-  let mockAction: any
-  let logMessages: string[]
+  let testConnectionStub: SinonStub
+  let clearClientsStub: SinonStub
+  let fsStub: Record<string, SinonStub>
+  let actionStartStub: SinonStub
+  let actionStopStub: SinonStub
 
   beforeEach(async () => {
-    logMessages = []
-
-    mockFs = {
-      async createFile() {},
-      async pathExists() {
-        return false
-      },
-      async readJSON() {
-        return {
-          auth: {
-            authToken: 'test-token',
-            host: 'https://sentry.io/api/0',
-            organization: 'test-org',
-          },
-        }
-      },
-      async writeJSON() {},
+    testConnectionStub = stub()
+    clearClientsStub = stub()
+    actionStartStub = stub()
+    actionStopStub = stub()
+    fsStub = {
+      createFile: stub().resolves(),
+      pathExists: stub().resolves(false),
+      readJSON: stub().resolves({auth: {authToken: 'tok', host: 'https://sentry.io/api/0', organization: 'my-org'}}),
+      writeJSON: stub().resolves(),
     }
 
-    mockTestConnection = async () => ({
-      data: {},
-      success: true,
-    })
-
-    mockClearClients = () => {}
-
-    mockAction = {
-      start() {},
-      stop() {},
-    }
-
-    AuthAdd = await esmock('../../../../src/commands/sentry/auth/add.js', {
+    const imported = await esmock('../../../../src/commands/sentry/auth/add.js', {
       '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
       },
-      '@oclif/core/ux': {
-        action: mockAction,
-      },
-      'fs-extra': mockFs,
+      '@inquirer/prompts': {input: stub().resolves('https://sentry.io/api/0')},
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
     })
+    AuthAdd = imported.default
   })
 
-  it('adds authentication successfully with flags', async () => {
-    const command = new AuthAdd.default(
-      ['--token', 'token123', '--organization', 'my-org', '--url', 'https://sentry.io/api/0'],
-      createMockConfig(),
-    )
+  it('writes config and shows success on valid auth', async () => {
+    testConnectionStub.resolves({data: {organization: 'my-org'}, success: true})
 
-    command.log = (msg: string) => {
-      logMessages.push(msg)
-    }
+    const cmd = new AuthAdd(['--token', 'my-token', '--organization', 'my-org', '--url', 'https://sentry.io/api/0'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
 
-    const result = await command.run()
+    const result = await cmd.run()
 
+    expect(fsStub.pathExists.calledOnce).to.be.true
+    expect(fsStub.createFile.calledOnce).to.be.true
+    expect(fsStub.writeJSON.calledOnce).to.be.true
+    const writtenData = fsStub.writeJSON.firstCall.args[1]
+    expect(writtenData.auth.authToken).to.equal('my-token')
+    expect(writtenData.auth.organization).to.equal('my-org')
+    expect(testConnectionStub.calledOnce).to.be.true
+    expect(clearClientsStub.calledOnce).to.be.true
+    expect(actionStopStub.calledWith('✓ successful')).to.be.true
+    expect(logStub.calledWith('Authentication added successfully')).to.be.true
     expect(result.success).to.be.true
-    expect(logMessages).to.include('Authentication added successfully')
   })
 
-  it('handles authentication failure', async () => {
-    mockTestConnection = async () => ({
-      error: 'Invalid credentials',
-      success: false,
-    })
+  it('does not create file if config already exists', async () => {
+    fsStub.pathExists.resolves(true)
+    testConnectionStub.resolves({data: {}, success: true})
 
-    AuthAdd = await esmock('../../../../src/commands/sentry/auth/add.js', {
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {
-        action: mockAction,
-      },
-      'fs-extra': mockFs,
-    })
+    const cmd = new AuthAdd(['--token', 'tok', '--organization', 'my-org'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
 
-    const command = new AuthAdd.default(['--token', 'bad-token', '--organization', 'my-org'], createMockConfig())
+    await cmd.run()
 
-    command.log = (msg: string) => {
-      logMessages.push(msg)
-    }
-
-    let errorThrown = false
-    command.error = (msg: string) => {
-      errorThrown = true
-      expect(msg).to.include('Authentication is invalid')
-    }
-
-    await command.run()
-
-    expect(errorThrown).to.be.true
+    expect(fsStub.createFile.called).to.be.false
+    expect(fsStub.writeJSON.calledOnce).to.be.true
   })
 
-  it('creates config file if it does not exist', async () => {
-    let createFileCalled = false
+  it('shows error on failed auth test', async () => {
+    testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
-    mockFs = {
-      ...mockFs,
-      async createFile() {
-        createFileCalled = true
-      },
-      async pathExists() {
-        return false
-      },
-    }
+    const cmd = new AuthAdd(['--token', 'bad', '--organization', 'my-org'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+    const errorStub = stub(cmd, 'error')
 
-    AuthAdd = await esmock('../../../../src/commands/sentry/auth/add.js', {
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {
-        action: mockAction,
-      },
-      'fs-extra': mockFs,
-    })
+    await cmd.run()
 
-    const command = new AuthAdd.default(['--token', 'token123', '--organization', 'my-org'], createMockConfig())
-
-    command.log = () => {}
-
-    await command.run()
-
-    expect(createFileCalled).to.be.true
+    expect(actionStopStub.calledWith('✗ failed')).to.be.true
+    expect(errorStub.calledWith('Authentication is invalid. Please check your token, organization, and URL.')).to.be
+      .true
   })
 
-  it('does not create config file if it already exists', async () => {
-    let createFileCalled = false
+  it('writes config with owner-only permissions', async () => {
+    testConnectionStub.resolves({data: {}, success: true})
 
-    mockFs = {
-      ...mockFs,
-      async createFile() {
-        createFileCalled = true
-      },
-      async pathExists() {
-        return true
-      },
-    }
+    const cmd = new AuthAdd(['--token', 'tok', '--organization', 'my-org'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
 
-    AuthAdd = await esmock('../../../../src/commands/sentry/auth/add.js', {
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {
-        action: mockAction,
-      },
-      'fs-extra': mockFs,
-    })
+    await cmd.run()
 
-    const command = new AuthAdd.default(['--token', 'token123', '--organization', 'my-org'], createMockConfig())
-
-    command.log = () => {}
-
-    await command.run()
-
-    expect(createFileCalled).to.be.false
-  })
-
-  it('calls clearClients after execution', async () => {
-    let clearClientsCalled = false
-
-    mockClearClients = () => {
-      clearClientsCalled = true
-    }
-
-    AuthAdd = await esmock('../../../../src/commands/sentry/auth/add.js', {
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        testConnection: mockTestConnection,
-      },
-      '@oclif/core/ux': {
-        action: mockAction,
-      },
-      'fs-extra': mockFs,
-    })
-
-    const command = new AuthAdd.default(['--token', 'token123', '--organization', 'my-org'], createMockConfig())
-
-    command.log = () => {}
-
-    await command.run()
-
-    expect(clearClientsCalled).to.be.true
+    const writeOptions = fsStub.writeJSON.firstCall.args[2]
+    expect(writeOptions.mode).to.equal(0o600)
   })
 })

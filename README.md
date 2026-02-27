@@ -26,7 +26,7 @@ $ npm install -g @hesed/sentry
 $ sentry COMMAND
 running command...
 $ sentry (--version)
-@hesed/sentry/0.1.0 linux-x64 node-v20.20.0
+@hesed/sentry/0.1.0 darwin-arm64 node-v22.14.0
 $ sentry --help [COMMAND]
 USAGE
   $ sentry COMMAND
@@ -59,11 +59,11 @@ Add Sentry authentication
 
 ```
 USAGE
-  $ sentry sentry auth add -o <value> -t <value> [--json] [-u <value>]
+  $ sentry sentry auth add [--json] [-o <value>] [-t <value>] [-u <value>]
 
 FLAGS
-  -o, --organization=<value>  (required) Sentry organization slug:
-  -t, --token=<value>         (required) Auth Token:
+  -o, --organization=<value>  Sentry organization slug:
+  -t, --token=<value>         Auth Token:
   -u, --url=<value>           [default: https://sentry.io/api/0] Sentry base URL:
 
 GLOBAL FLAGS
@@ -104,12 +104,12 @@ Update existing authentication
 
 ```
 USAGE
-  $ sentry sentry auth update -o <value> -t <value> -u <value> [--json]
+  $ sentry sentry auth update [--json] [-o <value>] [-t <value>] [-u <value>]
 
 FLAGS
-  -o, --organization=<value>  (required) Sentry organization slug
-  -t, --token=<value>         (required) Auth Token
-  -u, --url=<value>           (required) Sentry base URL
+  -o, --organization=<value>  Sentry organization slug
+  -t, --token=<value>         Auth Token
+  -u, --url=<value>           Sentry base URL
 
 GLOBAL FLAGS
   --json  Format output as json.

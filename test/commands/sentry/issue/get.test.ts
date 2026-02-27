@@ -1,81 +1,86 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import {type SinonStub, stub} from 'sinon'
 
-import {createMockConfig} from '../../../helpers/config-mock.js'
-
-describe('sentry:issue:get', () => {
+describe('issue:get', () => {
   let IssueGet: any
-  let mockReadConfig: any
-  let mockGetIssue: any
-  let mockClearClients: any
+  let readConfigStub: SinonStub
+  let getIssueStub: SinonStub
+  let clearClientsStub: SinonStub
+  let formatAsToonStub: SinonStub
 
-  const mockAuth = {
-    authToken: 'test-token',
-    host: 'https://sentry.io/api/0',
-    organization: 'test-org',
+  const mockConfig = {
+    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
   }
 
-  const mockIssue = {
-    id: '123456789',
-    shortId: 'PROJ-1',
-    status: 'unresolved',
-    title: 'TypeError: Cannot read properties of undefined',
-  }
+  const mockResult = {data: {id: '123456789', status: 'unresolved', title: 'TypeError'}, success: true}
 
   beforeEach(async () => {
-    mockReadConfig = async () => ({auth: mockAuth})
+    readConfigStub = stub().resolves(mockConfig)
+    getIssueStub = stub().resolves(mockResult)
+    clearClientsStub = stub()
+    formatAsToonStub = stub().returns('toon-output')
 
-    mockGetIssue = async () => ({
-      data: mockIssue,
-      success: true,
-    })
-
-    mockClearClients = () => {}
-
-    IssueGet = await esmock('../../../../src/commands/sentry/issue/get.js', {
-      '../../../../src/config.js': {readConfig: mockReadConfig},
+    const imported = await esmock('../../../../src/commands/sentry/issue/get.js', {
+      '../../../../src/config.js': {readConfig: readConfigStub},
+      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        getIssue: mockGetIssue,
+        clearClients: clearClientsStub,
+        getIssue: getIssueStub,
       },
     })
+    IssueGet = imported.default
   })
 
-  it('retrieves an issue by ID', async () => {
-    const command = new IssueGet.default(['123456789'], createMockConfig())
+  it('calls getIssue with correct args and outputs JSON', async () => {
+    const cmd = new IssueGet(['123456789'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logJsonStub = stub(cmd, 'logJson')
 
-    let jsonOutput: unknown
-    command.logJson = (data: unknown) => {
-      jsonOutput = data
-    }
+    await cmd.run()
 
-    await command.run()
-
-    expect((jsonOutput as any).success).to.be.true
-    expect((jsonOutput as any).data.id).to.equal('123456789')
+    expect(readConfigStub.calledOnce).to.be.true
+    expect(getIssueStub.calledOnce).to.be.true
+    expect(getIssueStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789'])
+    expect(clearClientsStub.calledOnce).to.be.true
+    expect(logJsonStub.calledOnce).to.be.true
+    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('calls clearClients after execution', async () => {
-    let clearClientsCalled = false
-    mockClearClients = () => {
-      clearClientsCalled = true
-    }
+  it('returns early when config is missing', async () => {
+    readConfigStub.resolves(null)
 
-    IssueGet = await esmock('../../../../src/commands/sentry/issue/get.js', {
-      '../../../../src/config.js': {readConfig: mockReadConfig},
-      '../../../../src/sentry/sentry-client.js': {
-        clearClients: mockClearClients,
-        getIssue: mockGetIssue,
-      },
-    })
+    const cmd = new IssueGet(['123456789'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logJsonStub = stub(cmd, 'logJson')
 
-    const command = new IssueGet.default(['123456789'], createMockConfig())
-    command.logJson = () => {}
+    await cmd.run()
 
-    await command.run()
+    expect(readConfigStub.calledOnce).to.be.true
+    expect(getIssueStub.called).to.be.false
+    expect(clearClientsStub.called).to.be.false
+    expect(logJsonStub.called).to.be.false
+  })
 
-    expect(clearClientsCalled).to.be.true
+  it('outputs TOON format when --toon flag is used', async () => {
+    const cmd = new IssueGet(['123456789', '--toon'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+
+    await cmd.run()
+
+    expect(getIssueStub.calledOnce).to.be.true
+    expect(getIssueStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789'])
+    expect(clearClientsStub.calledOnce).to.be.true
+    expect(formatAsToonStub.calledOnce).to.be.true
+    expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(logStub.calledWith('toon-output')).to.be.true
   })
 })

@@ -8,14 +8,11 @@ describe('config', () => {
   const testConfigDir = path.join(process.cwd(), 'test-config')
   const testConfigPath = path.join(testConfigDir, 'sentry-config.json')
 
-  // Setup and teardown
   beforeEach(async () => {
-    // Create test config directory
     await fs.ensureDir(testConfigDir)
   })
 
   afterEach(async () => {
-    // Clean up test config directory
     await fs.remove(testConfigDir)
   })
 
@@ -72,6 +69,18 @@ describe('config', () => {
       const result = await readConfig(testConfigDir, (msg) => logMessages.push(msg))
 
       expect(result).to.deep.equal(testConfig)
+    })
+
+    it('logs actual error message for non-ENOENT errors', async () => {
+      await fs.writeFile(testConfigPath, 'invalid json content {')
+
+      const logMessages: string[] = []
+      const result = await readConfig(testConfigDir, (msg) => logMessages.push(msg))
+
+      expect(result).to.be.undefined
+      expect(logMessages).to.have.lengthOf(1)
+      expect(logMessages[0]).to.not.include('Missing authentication config')
+      expect(logMessages[0].length).to.be.greaterThan(0)
     })
 
     it('handles config with additional fields', async () => {

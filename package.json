@@ -56,9 +56,6 @@
     "bin": "sentry",
     "dirname": "sentry",
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-*"
-    ],
     "topicSeparator": " ",
     "topics": {},
     "update": {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/hesedcasa/sentry/compare/v0.2.0...v0.2.1) (2026-03-04)
+
+
+### 🛠️ Fixes
+
+* remove unused oclif plugin ([0049453](https://github.com/hesedcasa/sentry/commit/0049453039f56b6e495d50e2d8026b33638491c8))
+
 ## [0.2.0](https://github.com/hesedcasa/sentry/compare/v0.1.0...v0.2.0) (2026-02-27)
 
 

@@ -14,16 +14,19 @@ export default class AuthUpdate extends Command {
   static override examples = ['<%= config.bin %> <%= command.id %>']
   static override flags = {
     organization: Flags.string({char: 'o', description: 'Sentry organization slug', required: !process.stdout.isTTY}),
+    profile: Flags.string({char: 'p', default: 'default', description: 'Profile name', required: false}),
     token: Flags.string({char: 't', description: 'Auth Token', required: !process.stdout.isTTY}),
     url: Flags.string({char: 'u', description: 'Sentry base URL', required: !process.stdout.isTTY}),
   }
 
   public async run(): Promise<ApiResult | void> {
     const {flags} = await this.parse(AuthUpdate)
+    const profileName = flags.profile
     const configPath = path.join(this.config.configDir, 'sentry-config.json')
-    let config
+
+    let raw: Record<string, unknown>
     try {
-      config = await fs.readJSON(configPath)
+      raw = await fs.readJSON(configPath)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       if (msg.toLowerCase().includes('no such file or directory')) {
@@ -35,36 +38,49 @@ export default class AuthUpdate extends Command {
       return
     }
 
+    let currentProfile: Record<string, unknown> | undefined
+    let existingProfiles: Record<string, unknown> = {}
+
+    if (raw.profiles) {
+      existingProfiles = raw.profiles as Record<string, unknown>
+      currentProfile = existingProfiles[profileName] as Record<string, unknown> | undefined
+    } else if (raw.auth && profileName === 'default') {
+      currentProfile = raw.auth as Record<string, unknown>
+    }
+
+    if (!currentProfile) {
+      this.log(`Profile '${profileName}' not found. Run auth:add instead`)
+      return
+    }
+
     const authToken =
       flags.token ??
-      (await input({default: config.auth.authToken, message: 'Auth Token:', prefill: 'tab', required: true}))
+      (await input({default: currentProfile.authToken as string, message: 'Auth Token:', prefill: 'tab', required: true}))
     const organization =
       flags.organization ??
-      (await input({default: config.auth.organization, message: 'Organization slug:', prefill: 'tab', required: true}))
+      (await input({default: currentProfile.organization as string, message: 'Organization slug:', prefill: 'tab', required: true}))
     const host =
       flags.url ??
-      (await input({default: config.auth.host, message: 'Sentry base URL:', prefill: 'tab', required: true}))
+      (await input({default: currentProfile.host as string, message: 'Sentry base URL:', prefill: 'tab', required: true}))
     const answer = await confirm({message: 'Override existing config?'})
 
     if (!answer) {
       return
     }
 
-    const auth = {
-      auth: {
-        authToken,
-        host,
-        organization,
-      },
+    const profileData = {
+      authToken,
+      host,
+      organization,
     }
+    const config = {profiles: {...existingProfiles, [profileName]: profileData}}
 
-    await fs.writeJSON(configPath, auth, {
-      mode: 0o600, // owner read/write only
+    await fs.writeJSON(configPath, config, {
+      mode: 0o600,
     })
 
     action.start('Authenticating')
-    config = await fs.readJSON(configPath)
-    const result = await testConnection(config.auth)
+    const result = await testConnection(profileData)
     clearClients()
 
     if (result.success) {

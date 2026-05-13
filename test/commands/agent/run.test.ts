@@ -11,7 +11,8 @@ describe('agent:run', () => {
   let formatAsToonStub: SinonStub
 
   const mockConfig = {auth: {apiKey: 'sk-ant-test', apiUrl: 'https://api.anthropic.com'}}
-  const mockResult = {data: {result: 'done', toolsUsed: []}, success: true}
+  const mockUsage = {costUsd: 0.0123, durationMs: 4321, inputTokens: 1500, numTurns: 3, outputTokens: 250}
+  const mockResult = {data: {result: 'done', toolsUsed: [], usage: mockUsage}, success: true}
 
   beforeEach(async () => {
     readAgentConfigStub = stub().resolves(mockConfig)
@@ -27,13 +28,14 @@ describe('agent:run', () => {
     AgentRun = imported.default
   })
 
-  it('forwards slash command name and outputs JSON', async () => {
+  it('forwards slash command name, outputs JSON, and appends token summary', async () => {
     const cmd = new AgentRun(['/help'], {
       configDir: '/tmp/test-agent-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
+    const logStub = stub(cmd, 'log')
 
     await cmd.run()
 
@@ -44,6 +46,24 @@ describe('agent:run', () => {
     expect(runStub.firstCall.args[2]).to.be.undefined
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(logStub.calledWith('Tokens: 1500 in / 250 out | cost: $0.0123 | turns: 3 | duration: 4.3s')).to.be.true
+  })
+
+  it('does not log a summary line when result has no usage', async () => {
+    runStub.resolves({data: {result: 'done', toolsUsed: []}, success: true})
+
+    const cmd = new AgentRun(['/help'], {
+      configDir: '/tmp/test-agent-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    const summaryCalls = logStub.getCalls().filter((c) => String(c.args[0] ?? '').startsWith('Tokens: '))
+    expect(summaryCalls).to.have.length(0)
   })
 
   it('passes the optional input arg through', async () => {

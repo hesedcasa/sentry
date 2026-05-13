@@ -1,7 +1,9 @@
 import {Args, Command, Flags} from '@oclif/core'
 
 import {readAgentConfig} from '../../agent-config.js'
+import {type UsageSummary} from '../../agent/agent-api.js'
 import {clearClients, run} from '../../agent/agent-client.js'
+import {formatUsageSummary} from '../../agent/usage.js'
 import {formatAsToon} from '../../format.js'
 
 /* eslint-disable perfectionist/sort-objects */
@@ -52,5 +54,9 @@ export default class AgentRun extends Command {
     } else {
       this.logJson(result)
     }
+
+    const usage = (result.data as undefined | {usage?: UsageSummary})?.usage
+    const summary = formatUsageSummary(usage)
+    if (summary) this.log(summary)
   }
 }

@@ -34,7 +34,53 @@ describe('AgentApi', () => {
       const result = await api.ask('Hello there')
 
       expect(result.success).to.be.true
-      expect(result.data).to.deep.equal({result: 'Done!', toolsUsed: ['Read']})
+      expect((result.data as any).result).to.equal('Done!')
+      expect((result.data as any).toolsUsed).to.deep.equal(['Read'])
+    })
+
+    it('captures usage from the success result message', async () => {
+      const queryFn = makeQueryStub([
+        {
+          // eslint-disable-next-line camelcase
+          duration_ms: 4321,
+          // eslint-disable-next-line camelcase
+          num_turns: 3,
+          result: 'Done!',
+          subtype: 'success',
+          // eslint-disable-next-line camelcase
+          total_cost_usd: 0.0234,
+          type: 'result',
+          // eslint-disable-next-line camelcase
+          usage: {input_tokens: 1500, output_tokens: 250},
+        },
+      ])
+
+      const api = new AgentApi(config, queryFn)
+      const result = await api.ask('hi')
+
+      expect(result.success).to.be.true
+      expect((result.data as any).usage).to.deep.equal({
+        costUsd: 0.0234,
+        durationMs: 4321,
+        inputTokens: 1500,
+        numTurns: 3,
+        outputTokens: 250,
+      })
+    })
+
+    it('defaults missing usage fields to zero', async () => {
+      const queryFn = makeQueryStub([{result: 'Done!', subtype: 'success', type: 'result'}])
+
+      const api = new AgentApi(config, queryFn)
+      const result = await api.ask('hi')
+
+      expect((result.data as any).usage).to.deep.equal({
+        costUsd: 0,
+        durationMs: 0,
+        inputTokens: 0,
+        numTurns: 0,
+        outputTokens: 0,
+      })
     })
 
     it('passes ANTHROPIC_API_KEY and ANTHROPIC_BASE_URL via env option', async () => {

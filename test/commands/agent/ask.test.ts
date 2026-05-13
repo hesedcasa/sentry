@@ -11,7 +11,11 @@ describe('agent:ask', () => {
   let formatAsToonStub: SinonStub
 
   const mockConfig = {auth: {apiKey: 'sk-ant-test', apiUrl: 'https://api.anthropic.com'}}
-  const mockResult = {data: {result: 'The capital of France is Paris.', toolsUsed: []}, success: true}
+  const mockUsage = {costUsd: 0.0123, durationMs: 4321, inputTokens: 1500, numTurns: 3, outputTokens: 250}
+  const mockResult = {
+    data: {result: 'The capital of France is Paris.', toolsUsed: [], usage: mockUsage},
+    success: true,
+  }
 
   beforeEach(async () => {
     readAgentConfigStub = stub().resolves(mockConfig)
@@ -27,13 +31,14 @@ describe('agent:ask', () => {
     AgentAsk = imported.default
   })
 
-  it('calls ask with the prompt and outputs JSON by default', async () => {
+  it('calls ask with the prompt, outputs JSON, and appends token summary', async () => {
     const cmd = new AgentAsk(['What is the capital of France?'], {
       configDir: '/tmp/test-agent-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
+    const logStub = stub(cmd, 'log')
 
     await cmd.run()
 
@@ -44,6 +49,24 @@ describe('agent:ask', () => {
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(logStub.calledWith('Tokens: 1500 in / 250 out | cost: $0.0123 | turns: 3 | duration: 4.3s')).to.be.true
+  })
+
+  it('does not log a summary line when result has no usage', async () => {
+    askStub.resolves({data: {result: 'hi', toolsUsed: []}, success: true})
+
+    const cmd = new AgentAsk(['hi'], {
+      configDir: '/tmp/test-agent-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    const summaryCalls = logStub.getCalls().filter((c) => String(c.args[0] ?? '').startsWith('Tokens: '))
+    expect(summaryCalls).to.have.length(0)
   })
 
   it('returns early when config is missing', async () => {

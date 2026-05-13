@@ -19,9 +19,18 @@ export interface AskOptions {
   systemPrompt?: string
 }
 
+export interface UsageSummary {
+  costUsd: number
+  durationMs: number
+  inputTokens: number
+  numTurns: number
+  outputTokens: number
+}
+
 interface AskResult {
   result: string
   toolsUsed: string[]
+  usage?: UsageSummary
 }
 
 interface ListResult {
@@ -66,6 +75,7 @@ export class AgentApi {
 
       const toolsUsed: string[] = []
       let finalText = ''
+      let usage: undefined | UsageSummary
       let errorSubtype: string | undefined
 
       for await (const message of iterator as AsyncIterable<SDKMessage>) {
@@ -74,6 +84,7 @@ export class AgentApi {
         } else if (message.type === 'result') {
           if (message.subtype === 'success') {
             finalText = message.result
+            usage = this.extractUsage(message)
           } else {
             errorSubtype = message.subtype
           }
@@ -84,7 +95,7 @@ export class AgentApi {
         return {error: `Agent run ended with subtype: ${errorSubtype}`, success: false}
       }
 
-      return {data: {result: finalText, toolsUsed} satisfies AskResult, success: true}
+      return {data: {result: finalText, toolsUsed, usage} satisfies AskResult, success: true}
     } catch (error: unknown) {
       return {error: error instanceof Error ? error.message : String(error), success: false}
     }
@@ -189,6 +200,21 @@ export class AgentApi {
     }
 
     return env
+  }
+
+  private extractUsage(message: SDKMessage & {type: 'result'}): undefined | UsageSummary {
+    if (message.subtype !== 'success') return undefined
+    const u = message.usage as Record<string, unknown> | undefined
+    const inputTokens = Number(u?.input_tokens ?? 0)
+    const outputTokens = Number(u?.output_tokens ?? 0)
+
+    return {
+      costUsd: message.total_cost_usd ?? 0,
+      durationMs: message.duration_ms ?? 0,
+      inputTokens,
+      numTurns: message.num_turns ?? 0,
+      outputTokens,
+    }
   }
 
   private handleAssistantMessage(message: SDKMessage & {type: 'assistant'}, toolsUsed: string[], options?: AskOptions): void {

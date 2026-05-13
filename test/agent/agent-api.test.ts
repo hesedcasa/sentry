@@ -163,6 +163,74 @@ describe('AgentApi', () => {
     })
   })
 
+  describe('run', () => {
+    it('sends slash-prefixed names directly as the prompt', async () => {
+      const queryFn = makeQueryStub([{result: 'ok', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      await api.run('/help')
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.prompt).to.equal('/help')
+      expect(callArgs.options.skills).to.be.undefined
+    })
+
+    it('appends input to slash commands', async () => {
+      const queryFn = makeQueryStub([{result: 'ok', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      await api.run('/review', 'this branch')
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.prompt).to.equal('/review this branch')
+    })
+
+    it('scopes non-slash names to a single skill via options.skills', async () => {
+      const queryFn = makeQueryStub([{result: 'ok', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      await api.run('review', 'check this branch')
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.options.skills).to.deep.equal(['review'])
+      expect(callArgs.prompt).to.equal('check this branch')
+    })
+
+    it('uses a default instruction when no input is given for a skill', async () => {
+      const queryFn = makeQueryStub([{result: 'ok', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      await api.run('review')
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.options.skills).to.deep.equal(['review'])
+      expect(callArgs.prompt).to.equal('Use the review skill.')
+    })
+
+    it('returns error when name is blank', async () => {
+      const queryFn = makeQueryStub([])
+      const api = new AgentApi(config, queryFn)
+
+      const result = await api.run('   ')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Name is required')
+      expect(queryFn.called).to.be.false
+    })
+
+    it('forwards allowedTools and systemPrompt through to ask', async () => {
+      const queryFn = makeQueryStub([{result: 'ok', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      await api.run('review', 'go', {allowedTools: ['Read'], systemPrompt: 'Be concise.'})
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.options.allowedTools).to.deep.equal(['Read'])
+      expect(callArgs.options.systemPrompt).to.equal('Be concise.')
+      expect(callArgs.options.skills).to.deep.equal(['review'])
+    })
+  })
+
   describe('list', () => {
     it('extracts skills, commands, tools, agents, mcpServers from init message', async () => {
       const initMessage = {

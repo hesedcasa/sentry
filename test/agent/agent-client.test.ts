@@ -10,6 +10,7 @@ describe('agent-client', () => {
   let clearClients: any
   let askFn: any
   let listFn: any
+  let runFn: any
   let testConnectionFn: any
   let mockApiInstance: Record<string, SinonStub>
   let AgentApiStub: SinonStub
@@ -19,6 +20,7 @@ describe('agent-client', () => {
       ask: stub().resolves(mockResult),
       clearClients: stub(),
       list: stub().resolves({data: {skills: ['init']}, success: true}),
+      run: stub().resolves(mockResult),
       testConnection: stub().resolves(mockResult),
     }
     AgentApiStub = stub().returns(mockApiInstance)
@@ -30,6 +32,7 @@ describe('agent-client', () => {
     clearClients = mod.clearClients
     askFn = mod.ask
     listFn = mod.list
+    runFn = mod.run
     testConnectionFn = mod.testConnection
   })
 
@@ -81,6 +84,16 @@ describe('agent-client', () => {
       const result = await listFn(mockConfig)
       expect(mockApiInstance.list.calledOnce).to.be.true
       expect(result).to.deep.equal({data: {skills: ['init']}, success: true})
+    })
+  })
+
+  describe('run', () => {
+    it('delegates to AgentApi.run with name, input, and options', async () => {
+      const opts = {allowedTools: ['Read']}
+      const result = await runFn(mockConfig, '/help', 'extra', opts)
+
+      expect(mockApiInstance.run.calledOnceWith('/help', 'extra', opts)).to.be.true
+      expect(result).to.deep.equal(mockResult)
     })
   })
 })

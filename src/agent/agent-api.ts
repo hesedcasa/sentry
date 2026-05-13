@@ -15,6 +15,7 @@ export interface AskOptions {
   allowedTools?: string[]
   onText?: (text: string) => void
   onToolUse?: (toolName: string) => void
+  skills?: 'all' | string[]
   systemPrompt?: string
 }
 
@@ -57,6 +58,7 @@ export class AgentApi {
           allowedTools: options?.allowedTools,
           env: this.buildEnv(),
           permissionMode: 'bypassPermissions',
+          skills: options?.skills,
           systemPrompt: options?.systemPrompt,
         },
         prompt,
@@ -135,6 +137,30 @@ export class AgentApi {
 
       return {error: msg, success: false}
     }
+  }
+
+  /**
+   * Execute a slash command or skill by name.
+   *
+   * - Names starting with `/` are treated as slash commands and sent
+   *   directly as the prompt (e.g. `/help`, `/clear`, `/my-cmd args`).
+   * - Other names are treated as skills: the run is scoped to that
+   *   single skill via `options.skills`, and the user-supplied input
+   *   is forwarded to the model with a default instruction when blank.
+   */
+  async run(name: string, input?: string, options?: AskOptions): Promise<ApiResult> {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      return {error: 'Name is required', success: false}
+    }
+
+    if (trimmed.startsWith('/')) {
+      const prompt = input ? `${trimmed} ${input}` : trimmed
+      return this.ask(prompt, options)
+    }
+
+    const prompt = input || `Use the ${trimmed} skill.`
+    return this.ask(prompt, {...options, skills: [trimmed]})
   }
 
   /**

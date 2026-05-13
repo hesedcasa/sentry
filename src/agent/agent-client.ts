@@ -27,6 +27,16 @@ export async function list(config: AgentConfig): Promise<ApiResult> {
   return api.list()
 }
 
+export async function run(
+  config: AgentConfig,
+  name: string,
+  input?: string,
+  options?: AskOptions,
+): Promise<ApiResult> {
+  const api = initAgent(config)
+  return api.run(name, input, options)
+}
+
 export async function testConnection(config: AgentConfig): Promise<ApiResult> {
   const api = initAgent(config)
   return api.testConnection()

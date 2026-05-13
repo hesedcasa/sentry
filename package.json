@@ -8,6 +8,7 @@
   },
   "bugs": "https://github.com/hesedcasa/sentry/issues",
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.140",
     "@inquirer/prompts": "^8.2.0",
     "@oclif/core": "^4",
     "@toon-format/toon": "^2.1.0",

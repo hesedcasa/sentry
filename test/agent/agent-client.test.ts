@@ -9,6 +9,7 @@ describe('agent-client', () => {
 
   let clearClients: any
   let askFn: any
+  let listFn: any
   let testConnectionFn: any
   let mockApiInstance: Record<string, SinonStub>
   let AgentApiStub: SinonStub
@@ -17,6 +18,7 @@ describe('agent-client', () => {
     mockApiInstance = {
       ask: stub().resolves(mockResult),
       clearClients: stub(),
+      list: stub().resolves({data: {skills: ['init']}, success: true}),
       testConnection: stub().resolves(mockResult),
     }
     AgentApiStub = stub().returns(mockApiInstance)
@@ -27,6 +29,7 @@ describe('agent-client', () => {
 
     clearClients = mod.clearClients
     askFn = mod.ask
+    listFn = mod.list
     testConnectionFn = mod.testConnection
   })
 
@@ -70,6 +73,14 @@ describe('agent-client', () => {
       const result = await testConnectionFn(mockConfig)
       expect(mockApiInstance.testConnection.calledOnce).to.be.true
       expect(result).to.deep.equal(mockResult)
+    })
+  })
+
+  describe('list', () => {
+    it('delegates to AgentApi.list', async () => {
+      const result = await listFn(mockConfig)
+      expect(mockApiInstance.list.calledOnce).to.be.true
+      expect(result).to.deep.equal({data: {skills: ['init']}, success: true})
     })
   })
 })

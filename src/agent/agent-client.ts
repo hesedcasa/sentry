@@ -22,6 +22,11 @@ export async function ask(config: AgentConfig, prompt: string, options?: AskOpti
   return api.ask(prompt, options)
 }
 
+export async function list(config: AgentConfig): Promise<ApiResult> {
+  const api = initAgent(config)
+  return api.list()
+}
+
 export async function testConnection(config: AgentConfig): Promise<ApiResult> {
   const api = initAgent(config)
   return api.testConnection()

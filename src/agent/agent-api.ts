@@ -23,6 +23,14 @@ interface AskResult {
   toolsUsed: string[]
 }
 
+interface ListResult {
+  agents: string[]
+  commands: string[]
+  mcpServers: {name: string; status: string}[]
+  skills: string[]
+  tools: string[]
+}
+
 type QueryFn = typeof query
 
 /**
@@ -84,6 +92,50 @@ export class AgentApi {
    * Clear client (no persistent client to dispose for the SDK wrapper).
    */
   clearClients(): void {}
+
+  /**
+   * List the skills, slash commands, tools, subagents, and MCP servers
+   * available to the current session. Reads the SDK's init system message
+   * and aborts the run immediately afterwards.
+   */
+  async list(): Promise<ApiResult> {
+    const controller = new AbortController()
+    try {
+      const iterator = this.queryFn({
+        options: {
+          abortController: controller,
+          env: this.buildEnv(),
+          permissionMode: 'bypassPermissions',
+        },
+        prompt: 'list',
+      })
+
+      for await (const message of iterator as AsyncIterable<SDKMessage>) {
+        if (message.type === 'system' && message.subtype === 'init') {
+          controller.abort()
+          return {
+            data: {
+              agents: message.agents ?? [],
+              commands: message.slash_commands ?? [],
+              mcpServers: message.mcp_servers ?? [],
+              skills: message.skills ?? [],
+              tools: message.tools ?? [],
+            } satisfies ListResult,
+            success: true,
+          }
+        }
+      }
+
+      return {error: 'Agent did not emit an init message', success: false}
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      if (controller.signal.aborted) {
+        return {error: 'Aborted before init message', success: false}
+      }
+
+      return {error: msg, success: false}
+    }
+  }
 
   /**
    * Verify agent credentials by issuing a minimal prompt.

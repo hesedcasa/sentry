@@ -162,4 +162,80 @@ describe('AgentApi', () => {
       expect(() => api.clearClients()).to.not.throw()
     })
   })
+
+  describe('list', () => {
+    it('extracts skills, commands, tools, agents, mcpServers from init message', async () => {
+      const initMessage = {
+        agents: ['code-reviewer', 'planner'],
+        // eslint-disable-next-line camelcase
+        mcp_servers: [{name: 'github', status: 'connected'}],
+        skills: ['init', 'review'],
+        // eslint-disable-next-line camelcase
+        slash_commands: ['help', 'clear'],
+        subtype: 'init',
+        tools: ['Read', 'Edit', 'Bash'],
+        type: 'system',
+      }
+      const queryFn = makeQueryStub([initMessage])
+
+      const api = new AgentApi(config, queryFn)
+      const result = await api.list()
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({
+        agents: ['code-reviewer', 'planner'],
+        commands: ['help', 'clear'],
+        mcpServers: [{name: 'github', status: 'connected'}],
+        skills: ['init', 'review'],
+        tools: ['Read', 'Edit', 'Bash'],
+      })
+    })
+
+    it('passes an AbortController via options', async () => {
+      const queryFn = makeQueryStub([
+        // eslint-disable-next-line camelcase
+        {agents: [], mcp_servers: [], skills: [], slash_commands: [], subtype: 'init', tools: [], type: 'system'},
+      ])
+      const api = new AgentApi(config, queryFn)
+
+      await api.list()
+
+      const callArgs = queryFn.firstCall.args[0]
+      expect(callArgs.options.abortController).to.be.instanceOf(AbortController)
+    })
+
+    it('returns error when no init message is emitted', async () => {
+      const queryFn = makeQueryStub([{result: 'never', subtype: 'success', type: 'result'}])
+      const api = new AgentApi(config, queryFn)
+
+      const result = await api.list()
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Agent did not emit an init message')
+    })
+
+    it('returns error when iteration throws before init', async () => {
+      const queryFn = stub().returns({
+        [Symbol.asyncIterator]: () => ({
+          next: () => Promise.reject(new Error('boom')),
+        }),
+      })
+      const api = new AgentApi(config, queryFn as any)
+
+      const result = await api.list()
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('boom')
+    })
+
+    it('defaults missing arrays on init message to empty', async () => {
+      const queryFn = makeQueryStub([{subtype: 'init', type: 'system'}])
+      const api = new AgentApi(config, queryFn)
+
+      const result = await api.list()
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({agents: [], commands: [], mcpServers: [], skills: [], tools: []})
+    })
+  })
 })

@@ -1,7 +1,8 @@
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+
+import {type Config} from '../../../sentry/sentry-api.js'
 import {clearClients, listIssueHashes} from '../../../sentry/sentry-client.js'
 
 export default class IssueHashes extends Command {
@@ -17,13 +18,17 @@ export default class IssueHashes extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueHashes)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) return
+    const pm = createProfileManager<Config>(this.config)
+    const auth = pm.loadAuthConfig()
+    if (!auth) {
+      this.error('Not authenticated. Run sentry auth add first.')
+      return
+    }
 
     const params: Record<string, unknown> = {}
     if (flags.cursor) params.cursor = flags.cursor
 
-    const result = await listIssueHashes(config.auth, args.issueId, params)
+    const result = await listIssueHashes(auth, args.issueId, params)
     clearClients()
 
     if (flags.toon) {

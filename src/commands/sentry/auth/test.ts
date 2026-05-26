@@ -1,38 +1,25 @@
-import {Command} from '@oclif/core'
-import {action} from '@oclif/core/ux'
+import {createAuthTestCommand, type FieldDef} from '@hesed/plugin-lib'
 
-import {readConfig} from '../../../config.js'
-import {type ApiResult} from '../../../sentry/sentry-api.js'
-import {clearClients, testConnection} from '../../../sentry/sentry-client.js'
+import {type Config} from '../../../sentry/sentry-api.js'
+import {clearClients, getClient} from '../../../sentry/sentry-client.js'
 
-export default class AuthTest extends Command {
-  static override args = {}
-  static override description = 'Test authentication and connection'
-  static override enableJsonFlag = true
-  static override examples = ['<%= config.bin %> <%= command.id %>']
-  static override flags = {}
+const fields: FieldDef[] = [
+  {char: 't', description: 'Auth token', masked: true, message: 'Auth token:', name: 'authToken'},
+  {char: 'o', description: 'Organization slug', message: 'Organization slug:', name: 'organization'},
+  {char: 'u', default: 'https://sentry.io/api/0', description: 'Sentry base URL', message: 'Sentry base URL:', name: 'host'},
+]
 
-  public async run(): Promise<ApiResult> {
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) {
-      return {
-        error: 'Missing authentication config',
-        success: false,
-      }
+export default createAuthTestCommand({
+  clearClients,
+  fields,
+  hasHostFlag: false,
+  serviceName: 'Sentry',
+  testConnection: async (auth: Config) => {
+    try {
+      const client = getClient(auth)
+      return client.testConnection()
+    } catch (error) {
+      return {error, success: false}
     }
-
-    action.start('Authenticating connection')
-    const result = await testConnection(config.auth)
-    clearClients()
-
-    if (result.success) {
-      action.stop('✓ successful')
-      this.log('Successful connection to Sentry')
-    } else {
-      action.stop('✗ failed')
-      this.error('Failed to connect to Sentry.')
-    }
-
-    return result
-  }
-}
+  },
+})

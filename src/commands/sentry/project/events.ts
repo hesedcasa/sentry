@@ -1,7 +1,8 @@
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+
+import {type Config} from '../../../sentry/sentry-api.js'
 import {clearClients, listProjectEvents} from '../../../sentry/sentry-client.js'
 
 export default class ProjectEvents extends Command {
@@ -21,8 +22,12 @@ export default class ProjectEvents extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(ProjectEvents)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) return
+    const pm = createProfileManager<Config>(this.config)
+    const auth = pm.loadAuthConfig()
+    if (!auth) {
+      this.error('Not authenticated. Run sentry auth add first.')
+      return
+    }
 
     const params: Record<string, unknown> = {}
     if (flags.cursor) params.cursor = flags.cursor
@@ -31,7 +36,7 @@ export default class ProjectEvents extends Command {
     if (flags.start) params.start = flags.start
     if (flags['stats-period']) params.statsPeriod = flags['stats-period']
 
-    const result = await listProjectEvents(config.auth, args.projectSlug, params)
+    const result = await listProjectEvents(auth, args.projectSlug, params)
     clearClients()
 
     if (flags.toon) {

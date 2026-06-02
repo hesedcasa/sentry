@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/hesedcasa/sentry/compare/v0.2.1...v0.3.0) (2026-06-02)
+
+
+### 🎉 Features
+
+* integrate @hesed/plugin-lib with multi-profile auth support ([#54](https://github.com/hesedcasa/sentry/issues/54)) ([6e4cc01](https://github.com/hesedcasa/sentry/commit/6e4cc013ada097c2b6e63406d01931a218629b34))
+
 ## [0.2.1](https://github.com/hesedcasa/sentry/compare/v0.2.0...v0.2.1) (2026-03-04)
 
 

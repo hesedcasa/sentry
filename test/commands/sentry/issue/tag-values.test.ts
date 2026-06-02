@@ -5,13 +5,15 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('issue:tag-values', () => {
   let IssueTagValues: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let listTagValuesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {
@@ -23,17 +25,23 @@ describe('issue:tag-values', () => {
   }
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     listTagValuesStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/issue/tag-values.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listTagValues: listTagValuesStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     IssueTagValues = imported.default
@@ -48,9 +56,9 @@ describe('issue:tag-values', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listTagValuesStub.calledOnce).to.be.true
-    expect(listTagValuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(listTagValuesStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(listTagValuesStub.firstCall.args[1]).to.equal('123456789')
     expect(listTagValuesStub.firstCall.args[2]).to.equal('browser')
     expect(clearClientsStub.calledOnce).to.be.true
@@ -72,8 +80,8 @@ describe('issue:tag-values', () => {
     expect(params.environment).to.deep.equal(['production'])
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new IssueTagValues(['123456789', 'browser'], {
       root: process.cwd(),
@@ -81,9 +89,14 @@ describe('issue:tag-values', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listTagValuesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -99,7 +112,7 @@ describe('issue:tag-values', () => {
     await cmd.run()
 
     expect(listTagValuesStub.calledOnce).to.be.true
-    expect(listTagValuesStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789', 'browser', {}])
+    expect(listTagValuesStub.firstCall.args).to.deep.equal([mockAuth, '123456789', 'browser', {}])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

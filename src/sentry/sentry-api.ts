@@ -1,13 +1,6 @@
-/**
- * Generic API result
- */
-export interface ApiResult {
-  data?: unknown
-  error?: unknown
-  success: boolean
-}
+import {type ApiResult} from '@hesed/plugin-lib'
 
-export interface Config {
+export interface SentryConfig {
   authToken: string
   host: string
   organization: string
@@ -17,9 +10,9 @@ export interface Config {
  * Sentry REST API client
  */
 export class SentryApi {
-  private config: Config
+  private config: SentryConfig
 
-  constructor(config: Config) {
+  constructor(config: SentryConfig) {
     this.config = config
   }
 

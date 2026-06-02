@@ -1,7 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
+import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, listProjectIssues} from '../../../sentry/sentry-client.js'
 
 export default class ProjectIssues extends Command {
@@ -23,8 +23,11 @@ export default class ProjectIssues extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(ProjectIssues)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) return
+    const pm = createProfileManager<SentryConfig>(this.config)
+    const auth = await pm.loadAuthConfig()
+    if (!auth) {
+      this.error(`Missing authentication config.`)
+    }
 
     const params: Record<string, unknown> = {}
     if (flags.cursor) params.cursor = flags.cursor
@@ -32,7 +35,7 @@ export default class ProjectIssues extends Command {
     if (flags['short-id-lookup']) params.shortIdLookup = flags['short-id-lookup']
     if (flags['stats-period']) params.statsPeriod = flags['stats-period']
 
-    const result = await listProjectIssues(config.auth, args.projectSlug, params)
+    const result = await listProjectIssues(auth, args.projectSlug, params)
     clearClients()
 
     if (flags.toon) {

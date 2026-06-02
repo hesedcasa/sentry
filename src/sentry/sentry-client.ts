@@ -1,8 +1,10 @@
-import {type ApiResult, type Config, SentryApi} from './sentry-api.js'
+import {type ApiResult} from '@hesed/plugin-lib'
+
+import {SentryApi, type SentryConfig} from './sentry-api.js'
 
 let sentryApi: null | SentryApi = null
 
-function initSentry(config: Config): SentryApi {
+function initSentry(config: SentryConfig): SentryApi {
   if (!sentryApi) {
     sentryApi = new SentryApi(config)
   }
@@ -17,13 +19,13 @@ export function clearClients(): void {
   }
 }
 
-export async function testConnection(config: Config): Promise<ApiResult> {
+export async function testConnection(config: SentryConfig): Promise<ApiResult> {
   const api = initSentry(config)
   return api.testConnection()
 }
 
 export async function listOrgIssues(
-  config: Config,
+  config: SentryConfig,
   params?: {
     cursor?: string
     end?: string
@@ -40,13 +42,13 @@ export async function listOrgIssues(
   return api.listOrgIssues(params)
 }
 
-export async function getIssue(config: Config, issueId: string): Promise<ApiResult> {
+export async function getIssue(config: SentryConfig, issueId: string): Promise<ApiResult> {
   const api = initSentry(config)
   return api.getIssue(issueId)
 }
 
 export async function updateIssue(
-  config: Config,
+  config: SentryConfig,
   issueId: string,
   data: {
     assignedTo?: string
@@ -63,7 +65,7 @@ export async function updateIssue(
 }
 
 export async function listIssueEvents(
-  config: Config,
+  config: SentryConfig,
   issueId: string,
   params?: {
     cursor?: string
@@ -78,18 +80,18 @@ export async function listIssueEvents(
   return api.listIssueEvents(issueId, params)
 }
 
-export async function getIssueEvent(config: Config, issueId: string, eventId: string): Promise<ApiResult> {
+export async function getIssueEvent(config: SentryConfig, issueId: string, eventId: string): Promise<ApiResult> {
   const api = initSentry(config)
   return api.getIssueEvent(issueId, eventId)
 }
 
-export async function listIssueHashes(config: Config, issueId: string, params?: {cursor?: string}): Promise<ApiResult> {
+export async function listIssueHashes(config: SentryConfig, issueId: string, params?: {cursor?: string}): Promise<ApiResult> {
   const api = initSentry(config)
   return api.listIssueHashes(issueId, params)
 }
 
 export async function getTagDetails(
-  config: Config,
+  config: SentryConfig,
   issueId: string,
   tagKey: string,
   params?: {environment?: string[]},
@@ -99,7 +101,7 @@ export async function getTagDetails(
 }
 
 export async function listTagValues(
-  config: Config,
+  config: SentryConfig,
   issueId: string,
   tagKey: string,
   params?: {cursor?: string; environment?: string[]},
@@ -109,7 +111,7 @@ export async function listTagValues(
 }
 
 export async function listProjectEvents(
-  config: Config,
+  config: SentryConfig,
   projectSlug: string,
   params?: {
     cursor?: string
@@ -124,7 +126,7 @@ export async function listProjectEvents(
 }
 
 export async function listProjectIssues(
-  config: Config,
+  config: SentryConfig,
   projectSlug: string,
   params?: {
     cursor?: string
@@ -137,13 +139,13 @@ export async function listProjectIssues(
   return api.listProjectIssues(projectSlug, params)
 }
 
-export async function getEvent(config: Config, projectSlug: string, eventId: string): Promise<ApiResult> {
+export async function getEvent(config: SentryConfig, projectSlug: string, eventId: string): Promise<ApiResult> {
   const api = initSentry(config)
   return api.getEvent(projectSlug, eventId)
 }
 
 export async function debugSourceMaps(
-  config: Config,
+  config: SentryConfig,
   projectSlug: string,
   eventId: string,
   params?: {exception_idx?: string; frame_idx?: string},

@@ -5,13 +5,15 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('org:issues', () => {
   let OrgIssues: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let listOrgIssuesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {
@@ -23,17 +25,23 @@ describe('org:issues', () => {
   }
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     listOrgIssuesStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listOrgIssues: listOrgIssuesStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     OrgIssues = imported.default
@@ -48,9 +56,9 @@ describe('org:issues', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listOrgIssuesStub.calledOnce).to.be.true
-    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(listOrgIssuesStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
@@ -71,8 +79,8 @@ describe('org:issues', () => {
     expect(params.limit).to.equal(25)
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new OrgIssues([], {
       root: process.cwd(),
@@ -80,9 +88,14 @@ describe('org:issues', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listOrgIssuesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false

@@ -5,29 +5,37 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('event:source-maps', () => {
   let EventSourceMaps: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let debugSourceMapsStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {data: {errors: [], exceptions: []}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     debugSourceMapsStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/event/source-maps.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         debugSourceMaps: debugSourceMapsStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     EventSourceMaps = imported.default
@@ -42,9 +50,9 @@ describe('event:source-maps', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(debugSourceMapsStub.calledOnce).to.be.true
-    expect(debugSourceMapsStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(debugSourceMapsStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(debugSourceMapsStub.firstCall.args[1]).to.equal('my-project')
     expect(debugSourceMapsStub.firstCall.args[2]).to.equal('abc123def456')
     expect(clearClientsStub.calledOnce).to.be.true
@@ -66,8 +74,8 @@ describe('event:source-maps', () => {
     expect(params.frame_idx).to.equal('2')
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new EventSourceMaps(['my-project', 'abc123def456'], {
       root: process.cwd(),
@@ -75,9 +83,14 @@ describe('event:source-maps', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(debugSourceMapsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false

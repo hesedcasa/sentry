@@ -1,7 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
+import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, debugSourceMaps} from '../../../sentry/sentry-client.js'
 
 export default class EventSourceMaps extends Command {
@@ -21,8 +21,11 @@ export default class EventSourceMaps extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(EventSourceMaps)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) return
+    const pm = createProfileManager<SentryConfig>(this.config)
+    const auth = await pm.loadAuthConfig()
+    if (!auth) {
+      this.error(`Missing authentication config.`)
+    }
 
     const params: Record<string, unknown> = {}
     // eslint-disable-next-line camelcase
@@ -30,7 +33,7 @@ export default class EventSourceMaps extends Command {
     // eslint-disable-next-line camelcase
     if (flags['frame-idx']) params.frame_idx = flags['frame-idx']
 
-    const result = await debugSourceMaps(config.auth, args.projectSlug, args.eventId, params)
+    const result = await debugSourceMaps(auth, args.projectSlug, args.eventId, params)
     clearClients()
 
     if (flags.toon) {

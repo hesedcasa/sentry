@@ -1,7 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
+import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, listIssueEvents} from '../../../sentry/sentry-client.js'
 
 export default class IssueEvents extends Command {
@@ -22,8 +22,11 @@ export default class IssueEvents extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueEvents)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
-    if (!config) return
+    const pm = createProfileManager<SentryConfig>(this.config)
+    const auth = await pm.loadAuthConfig()
+    if (!auth) {
+      this.error(`Missing authentication config.`)
+    }
 
     const params: Record<string, unknown> = {}
     if (flags.cursor) params.cursor = flags.cursor
@@ -33,7 +36,7 @@ export default class IssueEvents extends Command {
     if (flags.start) params.start = flags.start
     if (flags['stats-period']) params.statsPeriod = flags['stats-period']
 
-    const result = await listIssueEvents(config.auth, args.issueId, params)
+    const result = await listIssueEvents(auth, args.issueId, params)
     clearClients()
 
     if (flags.toon) {

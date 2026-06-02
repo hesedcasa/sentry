@@ -5,29 +5,37 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('project:events', () => {
   let ProjectEvents: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let listProjectEventsStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {data: [{eventID: 'evt1'}, {eventID: 'evt2'}], success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     listProjectEventsStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/project/events.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listProjectEvents: listProjectEventsStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     ProjectEvents = imported.default
@@ -42,9 +50,9 @@ describe('project:events', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listProjectEventsStub.calledOnce).to.be.true
-    expect(listProjectEventsStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(listProjectEventsStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(listProjectEventsStub.firstCall.args[1]).to.equal('my-project')
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
@@ -65,8 +73,8 @@ describe('project:events', () => {
     expect(params.statsPeriod).to.equal('7d')
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new ProjectEvents(['my-project'], {
       root: process.cwd(),
@@ -74,9 +82,14 @@ describe('project:events', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listProjectEventsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -92,7 +105,7 @@ describe('project:events', () => {
     await cmd.run()
 
     expect(listProjectEventsStub.calledOnce).to.be.true
-    expect(listProjectEventsStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-project', {}])
+    expect(listProjectEventsStub.firstCall.args).to.deep.equal([mockAuth, 'my-project', {}])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

@@ -5,29 +5,37 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('issue:update', () => {
   let IssueUpdate: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let updateIssueStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {data: {id: '123456789', status: 'resolved'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     updateIssueStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/issue/update.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         updateIssue: updateIssueStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     IssueUpdate = imported.default
@@ -42,9 +50,9 @@ describe('issue:update', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(updateIssueStub.calledOnce).to.be.true
-    expect(updateIssueStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(updateIssueStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(updateIssueStub.firstCall.args[1]).to.equal('123456789')
     expect(updateIssueStub.firstCall.args[2]).to.deep.equal({status: 'resolved'})
     expect(clearClientsStub.calledOnce).to.be.true
@@ -64,8 +72,8 @@ describe('issue:update', () => {
     expect(updateIssueStub.firstCall.args[2]).to.deep.equal({assignedTo: 'user@example.com'})
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new IssueUpdate(['123456789', '--status', 'resolved'], {
       root: process.cwd(),
@@ -73,9 +81,14 @@ describe('issue:update', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(updateIssueStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false

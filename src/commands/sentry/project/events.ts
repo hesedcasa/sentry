@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
-import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
-
-import {type Config} from '../../../sentry/sentry-api.js'
+import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, listProjectEvents} from '../../../sentry/sentry-client.js'
 
 export default class ProjectEvents extends Command {
@@ -22,11 +21,10 @@ export default class ProjectEvents extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(ProjectEvents)
-    const pm = createProfileManager<Config>(this.config)
-    const auth = pm.loadAuthConfig()
+    const pm = createProfileManager<SentryConfig>(this.config)
+    const auth = await pm.loadAuthConfig()
     if (!auth) {
-      this.error('Not authenticated. Run sentry auth add first.')
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const params: Record<string, unknown> = {}

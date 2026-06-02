@@ -5,29 +5,37 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('issue:event', () => {
   let IssueEvent: any
-  let readConfigStub: SinonStub
+  let loadAuthConfigStub: SinonStub
   let getIssueEventStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {authToken: 'test-token', host: 'https://sentry.io/api/0', organization: 'test-org'},
+  const mockAuth = {
+    apiToken: 'test-token',
+    host: 'https://sentry.io/api/0',
+    organization: 'test-org',
   }
 
   const mockResult = {data: {eventID: 'abc123', id: 'abc123'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    loadAuthConfigStub = stub().resolves(mockAuth)
     getIssueEventStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
+    const mockProfileManager = {
+      loadAuthConfig: loadAuthConfigStub,
+    }
+
     const imported = await esmock('../../../../src/commands/sentry/issue/event.js', {
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         getIssueEvent: getIssueEventStub,
+      },
+      '@hesed/plugin-lib': {
+        createProfileManager: stub().returns(mockProfileManager),
+        formatAsToon: formatAsToonStub,
       },
     })
     IssueEvent = imported.default
@@ -42,16 +50,16 @@ describe('issue:event', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(getIssueEventStub.calledOnce).to.be.true
-    expect(getIssueEventStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789', 'latest'])
+    expect(getIssueEventStub.firstCall.args).to.deep.equal([mockAuth, '123456789', 'latest'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
-  it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    loadAuthConfigStub.resolves(null)
 
     const cmd = new IssueEvent(['123456789', 'oldest'], {
       root: process.cwd(),
@@ -59,9 +67,14 @@ describe('issue:event', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+      expect.fail('Should have thrown error')
+    } catch (error: any) {
+      expect(error.message).to.include('Missing authentication config.')
+    }
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(getIssueEventStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -77,7 +90,7 @@ describe('issue:event', () => {
     await cmd.run()
 
     expect(getIssueEventStub.calledOnce).to.be.true
-    expect(getIssueEventStub.firstCall.args).to.deep.equal([mockConfig.auth, '123456789', 'latest'])
+    expect(getIssueEventStub.firstCall.args).to.deep.equal([mockAuth, '123456789', 'latest'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

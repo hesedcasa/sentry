@@ -10,6 +10,7 @@ const fields: FieldDef[] = [
 
 export default createAuthTestCommand({
   clearClients,
+  configFile: 'sentry-config.json',
   fields,
   serviceName: 'Sentry',
   testConnection,

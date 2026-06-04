@@ -85,7 +85,11 @@ export async function getIssueEvent(config: SentryConfig, issueId: string, event
   return api.getIssueEvent(issueId, eventId)
 }
 
-export async function listIssueHashes(config: SentryConfig, issueId: string, params?: {cursor?: string}): Promise<ApiResult> {
+export async function listIssueHashes(
+  config: SentryConfig,
+  issueId: string,
+  params?: {cursor?: string},
+): Promise<ApiResult> {
   const api = initSentry(config)
   return api.listIssueHashes(issueId, params)
 }

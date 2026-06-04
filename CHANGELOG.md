@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/hesedcasa/sentry/compare/v0.3.0...v0.4.0) (2026-06-04)
+
+
+### 🎉 Features
+
+* upgrade @hesed/plugin-lib to v0.9.0 with explicit configFile ([6d91c55](https://github.com/hesedcasa/sentry/commit/6d91c55254c341b9b2a44a76c2e8e606cebef23d))
+
 ## [0.3.0](https://github.com/hesedcasa/sentry/compare/v0.2.1...v0.3.0) (2026-06-02)
 
 

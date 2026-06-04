@@ -26,7 +26,7 @@ $ npm install -g @hesed/sentry
 $ sentry COMMAND
 running command...
 $ sentry (--version)
-@hesed/sentry/0.3.0 linux-x64 node-v22.22.3
+@hesed/sentry/0.4.0 linux-x64 node-v22.22.3
 $ sentry --help [COMMAND]
 USAGE
   $ sentry COMMAND
@@ -82,7 +82,7 @@ EXAMPLES
   $ sentry sentry auth add -p prod
 ```
 
-_See code: [src/commands/sentry/auth/add.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/add.ts)_
+_See code: [src/commands/sentry/auth/add.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/add.ts)_
 
 ## `sentry sentry auth delete`
 
@@ -107,7 +107,7 @@ EXAMPLES
   $ sentry sentry auth delete -p prod
 ```
 
-_See code: [src/commands/sentry/auth/delete.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/delete.ts)_
+_See code: [src/commands/sentry/auth/delete.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/delete.ts)_
 
 ## `sentry sentry auth list`
 
@@ -127,7 +127,7 @@ EXAMPLES
   $ sentry sentry auth list
 ```
 
-_See code: [src/commands/sentry/auth/list.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/list.ts)_
+_See code: [src/commands/sentry/auth/list.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/list.ts)_
 
 ## `sentry sentry auth profile`
 
@@ -152,7 +152,7 @@ EXAMPLES
   $ sentry sentry auth profile --default test
 ```
 
-_See code: [src/commands/sentry/auth/profile.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/profile.ts)_
+_See code: [src/commands/sentry/auth/profile.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/profile.ts)_
 
 ## `sentry sentry auth test`
 
@@ -177,7 +177,7 @@ EXAMPLES
   $ sentry sentry auth test -p prod
 ```
 
-_See code: [src/commands/sentry/auth/test.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/test.ts)_
+_See code: [src/commands/sentry/auth/test.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/test.ts)_
 
 ## `sentry sentry auth update`
 
@@ -205,7 +205,7 @@ EXAMPLES
   $ sentry sentry auth update -p test
 ```
 
-_See code: [src/commands/sentry/auth/update.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/auth/update.ts)_
+_See code: [src/commands/sentry/auth/update.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/auth/update.ts)_
 
 ## `sentry sentry event get PROJECTSLUG EVENTID`
 
@@ -229,7 +229,7 @@ EXAMPLES
   $ sentry sentry event get my-project abc123def456
 ```
 
-_See code: [src/commands/sentry/event/get.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/event/get.ts)_
+_See code: [src/commands/sentry/event/get.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/event/get.ts)_
 
 ## `sentry sentry event source-maps PROJECTSLUG EVENTID`
 
@@ -255,7 +255,7 @@ EXAMPLES
   $ sentry sentry event source-maps my-project abc123def456
 ```
 
-_See code: [src/commands/sentry/event/source-maps.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/event/source-maps.ts)_
+_See code: [src/commands/sentry/event/source-maps.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/event/source-maps.ts)_
 
 ## `sentry sentry issue event ISSUEID EVENTID`
 
@@ -281,7 +281,7 @@ EXAMPLES
   $ sentry sentry issue event 123456789 abc123def456
 ```
 
-_See code: [src/commands/sentry/issue/event.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/event.ts)_
+_See code: [src/commands/sentry/issue/event.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/event.ts)_
 
 ## `sentry sentry issue events ISSUEID`
 
@@ -311,7 +311,7 @@ EXAMPLES
   $ sentry sentry issue events 123456789
 ```
 
-_See code: [src/commands/sentry/issue/events.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/events.ts)_
+_See code: [src/commands/sentry/issue/events.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/events.ts)_
 
 ## `sentry sentry issue get ISSUEID`
 
@@ -334,7 +334,7 @@ EXAMPLES
   $ sentry sentry issue get 123456789
 ```
 
-_See code: [src/commands/sentry/issue/get.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/get.ts)_
+_See code: [src/commands/sentry/issue/get.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/get.ts)_
 
 ## `sentry sentry issue hashes ISSUEID`
 
@@ -358,7 +358,7 @@ EXAMPLES
   $ sentry sentry issue hashes 123456789
 ```
 
-_See code: [src/commands/sentry/issue/hashes.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/hashes.ts)_
+_See code: [src/commands/sentry/issue/hashes.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/hashes.ts)_
 
 ## `sentry sentry issue tag ISSUEID TAGKEY`
 
@@ -383,7 +383,7 @@ EXAMPLES
   $ sentry sentry issue tag 123456789 browser
 ```
 
-_See code: [src/commands/sentry/issue/tag.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/tag.ts)_
+_See code: [src/commands/sentry/issue/tag.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/tag.ts)_
 
 ## `sentry sentry issue tag-values ISSUEID TAGKEY`
 
@@ -409,7 +409,7 @@ EXAMPLES
   $ sentry sentry issue tag-values 123456789 browser
 ```
 
-_See code: [src/commands/sentry/issue/tag-values.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/tag-values.ts)_
+_See code: [src/commands/sentry/issue/tag-values.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/tag-values.ts)_
 
 ## `sentry sentry issue update ISSUEID`
 
@@ -442,7 +442,7 @@ EXAMPLES
   $ sentry sentry issue update 123456789 --assigned-to user@example.com
 ```
 
-_See code: [src/commands/sentry/issue/update.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/issue/update.ts)_
+_See code: [src/commands/sentry/issue/update.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/issue/update.ts)_
 
 ## `sentry sentry org issues`
 
@@ -474,7 +474,7 @@ EXAMPLES
   $ sentry sentry org issues --query "is:unresolved" --limit 50
 ```
 
-_See code: [src/commands/sentry/org/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/org/issues.ts)_
+_See code: [src/commands/sentry/org/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/org/issues.ts)_
 
 ## `sentry sentry project events PROJECTSLUG`
 
@@ -503,7 +503,7 @@ EXAMPLES
   $ sentry sentry project events my-project
 ```
 
-_See code: [src/commands/sentry/project/events.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/project/events.ts)_
+_See code: [src/commands/sentry/project/events.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/project/events.ts)_
 
 ## `sentry sentry project issues PROJECTSLUG`
 
@@ -533,5 +533,5 @@ EXAMPLES
   $ sentry sentry project issues my-project --query "is:unresolved"
 ```
 
-_See code: [src/commands/sentry/project/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.3.0/src/commands/sentry/project/issues.ts)_
+_See code: [src/commands/sentry/project/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.4.0/src/commands/sentry/project/issues.ts)_
 <!-- commandsstop -->

@@ -16,12 +16,13 @@ export default class EventSourceMaps extends Command {
   static override flags = {
     'exception-idx': Flags.string({description: 'Exception index', required: false}),
     'frame-idx': Flags.string({description: 'Frame index', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(EventSourceMaps)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

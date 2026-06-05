@@ -17,7 +17,7 @@ export default class IssueEvent extends Command {
     '<%= config.bin %> <%= command.id %> 123456789 abc123def456',
   ]
   static override flags = {
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 

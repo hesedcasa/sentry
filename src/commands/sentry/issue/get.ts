@@ -11,7 +11,7 @@ export default class IssueGet extends Command {
   static override description = 'Retrieve a Sentry issue'
   static override examples = ['<%= config.bin %> <%= command.id %> 123456789']
   static override flags = {
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 

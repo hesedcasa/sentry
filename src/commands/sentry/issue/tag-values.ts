@@ -14,7 +14,7 @@ export default class IssueTagValues extends Command {
   static override flags = {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
     environment: Flags.string({description: 'Filter by environment', multiple: true, required: false}),
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 

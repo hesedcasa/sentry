@@ -13,7 +13,7 @@ export default class IssueTag extends Command {
   static override examples = ['<%= config.bin %> <%= command.id %> 123456789 browser']
   static override flags = {
     environment: Flags.string({description: 'Filter by environment', multiple: true, required: false}),
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 

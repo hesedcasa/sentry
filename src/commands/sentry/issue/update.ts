@@ -23,7 +23,7 @@ export default class IssueUpdate extends Command {
       description: 'Subscribe or unsubscribe from issue',
       required: false,
     }),
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     status: Flags.string({
       description: 'Issue status (resolved, resolvedInNextRelease, unresolved, ignored)',
       options: ['resolved', 'resolvedInNextRelease', 'unresolved', 'ignored'],

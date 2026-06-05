@@ -15,6 +15,7 @@ export default class ProjectIssues extends Command {
   ]
   static override flags = {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     query: Flags.string({description: 'Search query (e.g. "is:unresolved")', required: false}),
     'short-id-lookup': Flags.boolean({description: 'Enable short ID lookup', required: false}),
     'stats-period': Flags.string({description: 'Time period (e.g. 24h, 7d)', required: false}),
@@ -23,7 +24,7 @@ export default class ProjectIssues extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(ProjectIssues)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

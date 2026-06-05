@@ -16,6 +16,7 @@ export default class OrgIssues extends Command {
     end: Flags.string({description: 'End date (ISO-8601)', required: false}),
     environment: Flags.string({description: 'Filter by environment', multiple: true, required: false}),
     limit: Flags.integer({description: 'Maximum number of results', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     project: Flags.integer({description: 'Filter by project ID', multiple: true, required: false}),
     query: Flags.string({description: 'Search query (e.g. "is:unresolved")', required: false}),
     sort: Flags.string({description: 'Sort order', required: false}),
@@ -26,7 +27,7 @@ export default class OrgIssues extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(OrgIssues)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

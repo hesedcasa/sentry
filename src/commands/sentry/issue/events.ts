@@ -15,7 +15,7 @@ export default class IssueEvents extends Command {
     end: Flags.string({description: 'End date (ISO-8601)', required: false}),
     environment: Flags.string({description: 'Filter by environment', multiple: true, required: false}),
     full: Flags.boolean({description: 'Include full event body', required: false}),
-    profile: Flags.string({description: 'Profile name to use', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     start: Flags.string({description: 'Start date (ISO-8601)', required: false}),
     'stats-period': Flags.string({description: 'Time period (e.g. 24h, 7d)', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),

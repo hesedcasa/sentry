@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/hesedcasa/sentry/compare/v0.4.0...v0.5.0) (2026-06-05)
+
+
+### 🎉 Features
+
+* add --profile flag and explicit configFile to all commands ([#60](https://github.com/hesedcasa/sentry/issues/60)) ([e2baf3a](https://github.com/hesedcasa/sentry/commit/e2baf3a81df6881c307d3458b6bf29875c42231f))
+
 ## [0.4.0](https://github.com/hesedcasa/sentry/compare/v0.3.0...v0.4.0) (2026-06-04)
 
 

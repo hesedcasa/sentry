@@ -23,7 +23,7 @@ export default class IssueEvents extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueEvents)
-    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

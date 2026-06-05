@@ -17,7 +17,7 @@ export default class IssueGet extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueGet)
-    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

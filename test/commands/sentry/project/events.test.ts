@@ -9,6 +9,7 @@ describe('project:events', () => {
   let listProjectEventsStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
+  let createProfileManagerStub: SinonStub
 
   const mockAuth = {
     apiToken: 'test-token',
@@ -28,13 +29,15 @@ describe('project:events', () => {
       loadAuthConfig: loadAuthConfigStub,
     }
 
+    createProfileManagerStub = stub().returns(mockProfileManager)
+
     const imported = await esmock('../../../../src/commands/sentry/project/events.js', {
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listProjectEvents: listProjectEventsStub,
       },
       '@hesed/plugin-lib': {
-        createProfileManager: stub().returns(mockProfileManager),
+        createProfileManager: createProfileManagerStub,
         formatAsToon: formatAsToonStub,
       },
     })
@@ -110,5 +113,15 @@ describe('project:events', () => {
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)
     expect(logStub.calledWith('toon-output')).to.be.true
+  })
+
+  it('forwards --profile flag to createProfileManager', async () => {
+    const cmd = new ProjectEvents(['my-project', '--profile', 'work'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+    await cmd.run()
+    expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })
 })

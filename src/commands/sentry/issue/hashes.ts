@@ -12,12 +12,13 @@ export default class IssueHashes extends Command {
   static override examples = ['<%= config.bin %> <%= command.id %> 123456789']
   static override flags = {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueHashes)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

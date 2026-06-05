@@ -9,6 +9,7 @@ describe('issue:hashes', () => {
   let listIssueHashesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
+  let createProfileManagerStub: SinonStub
 
   const mockAuth = {
     apiToken: 'test-token',
@@ -28,13 +29,15 @@ describe('issue:hashes', () => {
       loadAuthConfig: loadAuthConfigStub,
     }
 
+    createProfileManagerStub = stub().returns(mockProfileManager)
+
     const imported = await esmock('../../../../src/commands/sentry/issue/hashes.js', {
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listIssueHashes: listIssueHashesStub,
       },
       '@hesed/plugin-lib': {
-        createProfileManager: stub().returns(mockProfileManager),
+        createProfileManager: createProfileManagerStub,
         formatAsToon: formatAsToonStub,
       },
     })
@@ -108,5 +111,15 @@ describe('issue:hashes', () => {
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)
     expect(logStub.calledWith('toon-output')).to.be.true
+  })
+
+  it('forwards --profile flag to createProfileManager', async () => {
+    const cmd = new IssueHashes(['123456789', '--profile', 'work'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+    await cmd.run()
+    expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })
 })

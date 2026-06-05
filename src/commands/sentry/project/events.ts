@@ -14,6 +14,7 @@ export default class ProjectEvents extends Command {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
     end: Flags.string({description: 'End date (ISO-8601)', required: false}),
     full: Flags.boolean({description: 'Include full event body', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     start: Flags.string({description: 'Start date (ISO-8601)', required: false}),
     'stats-period': Flags.string({description: 'Time period (e.g. 24h, 7d)', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
@@ -21,7 +22,7 @@ export default class ProjectEvents extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(ProjectEvents)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

@@ -17,12 +17,13 @@ export default class IssueEvent extends Command {
     '<%= config.bin %> <%= command.id %> 123456789 abc123def456',
   ]
   static override flags = {
+    profile: Flags.string({description: 'Profile name to use', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueEvent)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

@@ -23,6 +23,7 @@ export default class IssueUpdate extends Command {
       description: 'Subscribe or unsubscribe from issue',
       required: false,
     }),
+    profile: Flags.string({description: 'Profile name to use', required: false}),
     status: Flags.string({
       description: 'Issue status (resolved, resolvedInNextRelease, unresolved, ignored)',
       options: ['resolved', 'resolvedInNextRelease', 'unresolved', 'ignored'],
@@ -33,7 +34,7 @@ export default class IssueUpdate extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(IssueUpdate)
-    const pm = createProfileManager<SentryConfig>(this.config)
+    const pm = createProfileManager<SentryConfig>(this.config, flags.profile)
     const auth = await pm.loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

@@ -44,14 +44,13 @@ describe('event:source-maps', () => {
     EventSourceMaps = imported.default
   })
 
-  it('calls debugSourceMaps with correct args and outputs JSON', async () => {
+  it('calls debugSourceMaps with correct args and returns result', async () => {
     const cmd = new EventSourceMaps(['my-project', 'abc123def456'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(debugSourceMapsStub.calledOnce).to.be.true
@@ -59,8 +58,7 @@ describe('event:source-maps', () => {
     expect(debugSourceMapsStub.firstCall.args[1]).to.equal('my-project')
     expect(debugSourceMapsStub.firstCall.args[2]).to.equal('abc123def456')
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes exception-idx and frame-idx flags correctly', async () => {
@@ -68,7 +66,6 @@ describe('event:source-maps', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     await cmd.run()
 
@@ -84,7 +81,6 @@ describe('event:source-maps', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -96,7 +92,6 @@ describe('event:source-maps', () => {
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(debugSourceMapsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
@@ -120,7 +115,6 @@ describe('event:source-maps', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
     await cmd.run()
     expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })

@@ -44,22 +44,20 @@ describe('project:events', () => {
     ProjectEvents = imported.default
   })
 
-  it('calls listProjectEvents with correct args and outputs JSON', async () => {
+  it('calls listProjectEvents with correct args and returns result', async () => {
     const cmd = new ProjectEvents(['my-project'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listProjectEventsStub.calledOnce).to.be.true
     expect(listProjectEventsStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(listProjectEventsStub.firstCall.args[1]).to.equal('my-project')
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes optional flags correctly', async () => {
@@ -67,7 +65,6 @@ describe('project:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     await cmd.run()
 
@@ -83,7 +80,6 @@ describe('project:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -95,7 +91,6 @@ describe('project:events', () => {
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listProjectEventsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
@@ -120,7 +115,6 @@ describe('project:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
     await cmd.run()
     expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })

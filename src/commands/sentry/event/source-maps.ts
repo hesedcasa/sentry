@@ -1,10 +1,11 @@
-import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
-import {Args, Command, Flags} from '@oclif/core'
+import {type ApiResult, createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+import {Args, Flags} from '@oclif/core'
 
+import {BaseCommand} from '../../../base-command.js'
 import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, debugSourceMaps} from '../../../sentry/sentry-client.js'
 
-export default class EventSourceMaps extends Command {
+export default class EventSourceMaps extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects */
   static override args = {
     projectSlug: Args.string({description: 'Project slug', required: true}),
@@ -20,7 +21,7 @@ export default class EventSourceMaps extends Command {
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<ApiResult> {
     const {args, flags} = await this.parse(EventSourceMaps)
     const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
@@ -39,8 +40,8 @@ export default class EventSourceMaps extends Command {
 
     if (flags.toon) {
       this.log(formatAsToon(result))
-    } else {
-      this.logJson(result)
     }
+
+    return result
   }
 }

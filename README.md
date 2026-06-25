@@ -26,7 +26,7 @@ $ npm install -g @hesed/sentry
 $ sentry COMMAND
 running command...
 $ sentry (--version)
-@hesed/sentry/0.5.0 linux-x64 node-v22.22.3
+@hesed/sentry/0.5.1 linux-x64 node-v22.22.3
 $ sentry --help [COMMAND]
 USAGE
   $ sentry COMMAND
@@ -82,7 +82,7 @@ EXAMPLES
   $ sentry sentry auth add -p prod
 ```
 
-_See code: [src/commands/sentry/auth/add.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/add.ts)_
+_See code: [src/commands/sentry/auth/add.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/add.ts)_
 
 ## `sentry sentry auth delete`
 
@@ -107,7 +107,7 @@ EXAMPLES
   $ sentry sentry auth delete -p prod
 ```
 
-_See code: [src/commands/sentry/auth/delete.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/delete.ts)_
+_See code: [src/commands/sentry/auth/delete.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/delete.ts)_
 
 ## `sentry sentry auth list`
 
@@ -127,7 +127,7 @@ EXAMPLES
   $ sentry sentry auth list
 ```
 
-_See code: [src/commands/sentry/auth/list.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/list.ts)_
+_See code: [src/commands/sentry/auth/list.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/list.ts)_
 
 ## `sentry sentry auth profile`
 
@@ -152,7 +152,7 @@ EXAMPLES
   $ sentry sentry auth profile --default test
 ```
 
-_See code: [src/commands/sentry/auth/profile.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/profile.ts)_
+_See code: [src/commands/sentry/auth/profile.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/profile.ts)_
 
 ## `sentry sentry auth test`
 
@@ -177,7 +177,7 @@ EXAMPLES
   $ sentry sentry auth test -p prod
 ```
 
-_See code: [src/commands/sentry/auth/test.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/test.ts)_
+_See code: [src/commands/sentry/auth/test.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/test.ts)_
 
 ## `sentry sentry auth update`
 
@@ -205,7 +205,7 @@ EXAMPLES
   $ sentry sentry auth update -p test
 ```
 
-_See code: [src/commands/sentry/auth/update.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/auth/update.ts)_
+_See code: [src/commands/sentry/auth/update.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/auth/update.ts)_
 
 ## `sentry sentry event get PROJECTSLUG EVENTID`
 
@@ -213,7 +213,7 @@ Retrieve a Sentry event for a project
 
 ```
 USAGE
-  $ sentry sentry event get PROJECTSLUG EVENTID [-p <value>] [--toon]
+  $ sentry sentry event get PROJECTSLUG EVENTID [--json] [-p <value>] [--toon]
 
 ARGUMENTS
   PROJECTSLUG  Project slug
@@ -223,6 +223,9 @@ FLAGS
   -p, --profile=<value>  Authentication profile name
       --toon             Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Retrieve a Sentry event for a project
 
@@ -230,7 +233,7 @@ EXAMPLES
   $ sentry sentry event get my-project abc123def456
 ```
 
-_See code: [src/commands/sentry/event/get.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/event/get.ts)_
+_See code: [src/commands/sentry/event/get.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/event/get.ts)_
 
 ## `sentry sentry event source-maps PROJECTSLUG EVENTID`
 
@@ -238,8 +241,8 @@ Debug source maps for a Sentry event
 
 ```
 USAGE
-  $ sentry sentry event source-maps PROJECTSLUG EVENTID [--exception-idx <value>] [--frame-idx <value>] [-p <value>]
-  [--toon]
+  $ sentry sentry event source-maps PROJECTSLUG EVENTID [--json] [--exception-idx <value>] [--frame-idx <value>] [-p <value>]
+    [--toon]
 
 ARGUMENTS
   PROJECTSLUG  Project slug
@@ -251,6 +254,9 @@ FLAGS
       --frame-idx=<value>      Frame index
       --toon                   Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Debug source maps for a Sentry event
 
@@ -258,7 +264,7 @@ EXAMPLES
   $ sentry sentry event source-maps my-project abc123def456
 ```
 
-_See code: [src/commands/sentry/event/source-maps.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/event/source-maps.ts)_
+_See code: [src/commands/sentry/event/source-maps.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/event/source-maps.ts)_
 
 ## `sentry sentry issue event ISSUEID EVENTID`
 
@@ -266,7 +272,7 @@ Retrieve a specific event from a Sentry issue
 
 ```
 USAGE
-  $ sentry sentry issue event ISSUEID EVENTID [-p <value>] [--toon]
+  $ sentry sentry issue event ISSUEID EVENTID [--json] [-p <value>] [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -275,6 +281,9 @@ ARGUMENTS
 FLAGS
   -p, --profile=<value>  Authentication profile name
       --toon             Format output as toon
+
+GLOBAL FLAGS
+  --json  Format output as json.
 
 DESCRIPTION
   Retrieve a specific event from a Sentry issue
@@ -285,7 +294,7 @@ EXAMPLES
   $ sentry sentry issue event 123456789 abc123def456
 ```
 
-_See code: [src/commands/sentry/issue/event.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/event.ts)_
+_See code: [src/commands/sentry/issue/event.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/event.ts)_
 
 ## `sentry sentry issue events ISSUEID`
 
@@ -293,8 +302,8 @@ List a Sentry issue's events
 
 ```
 USAGE
-  $ sentry sentry issue events ISSUEID [--cursor <value>] [--end <value>] [--environment <value>...] [--full] [-p
-    <value>] [--start <value>] [--stats-period <value>] [--toon]
+  $ sentry sentry issue events ISSUEID [--json] [--cursor <value>] [--end <value>] [--environment <value>...] [--full]
+    [-p <value>] [--start <value>] [--stats-period <value>] [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -309,6 +318,9 @@ FLAGS
       --stats-period=<value>    Time period (e.g. 24h, 7d)
       --toon                    Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a Sentry issue's events
 
@@ -316,7 +328,7 @@ EXAMPLES
   $ sentry sentry issue events 123456789
 ```
 
-_See code: [src/commands/sentry/issue/events.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/events.ts)_
+_See code: [src/commands/sentry/issue/events.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/events.ts)_
 
 ## `sentry sentry issue get ISSUEID`
 
@@ -324,7 +336,7 @@ Retrieve a Sentry issue
 
 ```
 USAGE
-  $ sentry sentry issue get ISSUEID [-p <value>] [--toon]
+  $ sentry sentry issue get ISSUEID [--json] [-p <value>] [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -333,6 +345,9 @@ FLAGS
   -p, --profile=<value>  Authentication profile name
       --toon             Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Retrieve a Sentry issue
 
@@ -340,7 +355,7 @@ EXAMPLES
   $ sentry sentry issue get 123456789
 ```
 
-_See code: [src/commands/sentry/issue/get.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/get.ts)_
+_See code: [src/commands/sentry/issue/get.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/get.ts)_
 
 ## `sentry sentry issue hashes ISSUEID`
 
@@ -348,7 +363,7 @@ List a Sentry issue's hashes
 
 ```
 USAGE
-  $ sentry sentry issue hashes ISSUEID [--cursor <value>] [-p <value>] [--toon]
+  $ sentry sentry issue hashes ISSUEID [--json] [--cursor <value>] [-p <value>] [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -358,6 +373,9 @@ FLAGS
       --cursor=<value>   Pagination cursor
       --toon             Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a Sentry issue's hashes
 
@@ -365,7 +383,7 @@ EXAMPLES
   $ sentry sentry issue hashes 123456789
 ```
 
-_See code: [src/commands/sentry/issue/hashes.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/hashes.ts)_
+_See code: [src/commands/sentry/issue/hashes.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/hashes.ts)_
 
 ## `sentry sentry issue tag ISSUEID TAGKEY`
 
@@ -373,7 +391,7 @@ Retrieve tag details for a Sentry issue
 
 ```
 USAGE
-  $ sentry sentry issue tag ISSUEID TAGKEY [--environment <value>...] [-p <value>] [--toon]
+  $ sentry sentry issue tag ISSUEID TAGKEY [--json] [--environment <value>...] [-p <value>] [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -384,6 +402,9 @@ FLAGS
       --environment=<value>...  Filter by environment
       --toon                    Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Retrieve tag details for a Sentry issue
 
@@ -391,7 +412,7 @@ EXAMPLES
   $ sentry sentry issue tag 123456789 browser
 ```
 
-_See code: [src/commands/sentry/issue/tag.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/tag.ts)_
+_See code: [src/commands/sentry/issue/tag.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/tag.ts)_
 
 ## `sentry sentry issue tag-values ISSUEID TAGKEY`
 
@@ -399,7 +420,8 @@ List a tag's values for a Sentry issue
 
 ```
 USAGE
-  $ sentry sentry issue tag-values ISSUEID TAGKEY [--cursor <value>] [--environment <value>...] [-p <value>] [--toon]
+  $ sentry sentry issue tag-values ISSUEID TAGKEY [--json] [--cursor <value>] [--environment <value>...] [-p <value>]
+  [--toon]
 
 ARGUMENTS
   ISSUEID  Issue ID
@@ -411,6 +433,9 @@ FLAGS
       --environment=<value>...  Filter by environment
       --toon                    Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a tag's values for a Sentry issue
 
@@ -418,7 +443,7 @@ EXAMPLES
   $ sentry sentry issue tag-values 123456789 browser
 ```
 
-_See code: [src/commands/sentry/issue/tag-values.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/tag-values.ts)_
+_See code: [src/commands/sentry/issue/tag-values.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/tag-values.ts)_
 
 ## `sentry sentry issue update ISSUEID`
 
@@ -426,7 +451,7 @@ Update a Sentry issue
 
 ```
 USAGE
-  $ sentry sentry issue update ISSUEID [--assigned-to <value>] [--has-seen] [--is-bookmarked] [--is-public]
+  $ sentry sentry issue update ISSUEID [--json] [--assigned-to <value>] [--has-seen] [--is-bookmarked] [--is-public]
     [--is-subscribed] [-p <value>] [--status resolved|resolvedInNextRelease|unresolved|ignored] [--toon]
 
 ARGUMENTS
@@ -443,6 +468,9 @@ FLAGS
                              <options: resolved|resolvedInNextRelease|unresolved|ignored>
       --toon                 Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Update a Sentry issue
 
@@ -452,7 +480,7 @@ EXAMPLES
   $ sentry sentry issue update 123456789 --assigned-to user@example.com
 ```
 
-_See code: [src/commands/sentry/issue/update.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/issue/update.ts)_
+_See code: [src/commands/sentry/issue/update.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/issue/update.ts)_
 
 ## `sentry sentry org issues`
 
@@ -460,8 +488,8 @@ List a Sentry organization's issues
 
 ```
 USAGE
-  $ sentry sentry org issues [--cursor <value>] [--end <value>] [--environment <value>...] [--limit <value>] [-p
-    <value>] [--project <value>...] [--query <value>] [--sort <value>] [--start <value>] [--stats-period <value>]
+  $ sentry sentry org issues [--json] [--cursor <value>] [--end <value>] [--environment <value>...] [--limit <value>]
+    [-p <value>] [--project <value>...] [--query <value>] [--sort <value>] [--start <value>] [--stats-period <value>]
     [--toon]
 
 FLAGS
@@ -477,6 +505,9 @@ FLAGS
       --stats-period=<value>    Time period (e.g. 24h, 7d)
       --toon                    Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a Sentry organization's issues
 
@@ -486,7 +517,7 @@ EXAMPLES
   $ sentry sentry org issues --query "is:unresolved" --limit 50
 ```
 
-_See code: [src/commands/sentry/org/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/org/issues.ts)_
+_See code: [src/commands/sentry/org/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/org/issues.ts)_
 
 ## `sentry sentry project events PROJECTSLUG`
 
@@ -494,8 +525,8 @@ List a Sentry project's error events
 
 ```
 USAGE
-  $ sentry sentry project events PROJECTSLUG [--cursor <value>] [--end <value>] [--full] [-p <value>] [--start <value>]
-    [--stats-period <value>] [--toon]
+  $ sentry sentry project events PROJECTSLUG [--json] [--cursor <value>] [--end <value>] [--full] [-p <value>] [--start
+    <value>] [--stats-period <value>] [--toon]
 
 ARGUMENTS
   PROJECTSLUG  Project slug
@@ -509,6 +540,9 @@ FLAGS
       --stats-period=<value>  Time period (e.g. 24h, 7d)
       --toon                  Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a Sentry project's error events
 
@@ -516,7 +550,7 @@ EXAMPLES
   $ sentry sentry project events my-project
 ```
 
-_See code: [src/commands/sentry/project/events.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/project/events.ts)_
+_See code: [src/commands/sentry/project/events.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/project/events.ts)_
 
 ## `sentry sentry project issues PROJECTSLUG`
 
@@ -524,7 +558,7 @@ List a Sentry project's issues
 
 ```
 USAGE
-  $ sentry sentry project issues PROJECTSLUG [--cursor <value>] [-p <value>] [--query <value>] [--short-id-lookup]
+  $ sentry sentry project issues PROJECTSLUG [--json] [--cursor <value>] [-p <value>] [--query <value>] [--short-id-lookup]
     [--stats-period <value>] [--toon]
 
 ARGUMENTS
@@ -538,6 +572,9 @@ FLAGS
       --stats-period=<value>  Time period (e.g. 24h, 7d)
       --toon                  Format output as toon
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   List a Sentry project's issues
 
@@ -547,5 +584,5 @@ EXAMPLES
   $ sentry sentry project issues my-project --query "is:unresolved"
 ```
 
-_See code: [src/commands/sentry/project/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.5.0/src/commands/sentry/project/issues.ts)_
+_See code: [src/commands/sentry/project/issues.ts](https://github.com/hesedcasa/sentry/blob/v0.5.1/src/commands/sentry/project/issues.ts)_
 <!-- commandsstop -->

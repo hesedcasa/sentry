@@ -44,22 +44,20 @@ describe('issue:events', () => {
     IssueEvents = imported.default
   })
 
-  it('calls listIssueEvents with correct args and outputs JSON', async () => {
+  it('calls listIssueEvents with correct args and returns result', async () => {
     const cmd = new IssueEvents(['123456789'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listIssueEventsStub.calledOnce).to.be.true
     expect(listIssueEventsStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(listIssueEventsStub.firstCall.args[1]).to.equal('123456789')
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes optional flags correctly', async () => {
@@ -67,7 +65,6 @@ describe('issue:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     await cmd.run()
 
@@ -83,7 +80,6 @@ describe('issue:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -95,7 +91,6 @@ describe('issue:events', () => {
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(listIssueEventsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
@@ -119,7 +114,6 @@ describe('issue:events', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
     await cmd.run()
     expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })

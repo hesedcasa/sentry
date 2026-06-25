@@ -44,14 +44,13 @@ describe('issue:update', () => {
     IssueUpdate = imported.default
   })
 
-  it('calls updateIssue with correct args and outputs JSON', async () => {
+  it('calls updateIssue with correct args and returns result', async () => {
     const cmd = new IssueUpdate(['123456789', '--status', 'resolved'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(updateIssueStub.calledOnce).to.be.true
@@ -59,8 +58,7 @@ describe('issue:update', () => {
     expect(updateIssueStub.firstCall.args[1]).to.equal('123456789')
     expect(updateIssueStub.firstCall.args[2]).to.deep.equal({status: 'resolved'})
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes assigned-to flag correctly', async () => {
@@ -68,7 +66,6 @@ describe('issue:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     await cmd.run()
 
@@ -82,7 +79,6 @@ describe('issue:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -94,7 +90,6 @@ describe('issue:update', () => {
     expect(loadAuthConfigStub.calledOnce).to.be.true
     expect(updateIssueStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
@@ -118,7 +113,6 @@ describe('issue:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
     await cmd.run()
     expect(createProfileManagerStub.firstCall.args[1]).to.equal('work')
   })

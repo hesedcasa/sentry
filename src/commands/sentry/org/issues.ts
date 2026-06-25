@@ -1,10 +1,11 @@
-import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
-import {Command, Flags} from '@oclif/core'
+import {type ApiResult, createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+import {Flags} from '@oclif/core'
 
+import {BaseCommand} from '../../../base-command.js'
 import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, listOrgIssues} from '../../../sentry/sentry-client.js'
 
-export default class OrgIssues extends Command {
+export default class OrgIssues extends BaseCommand {
   static override args = {}
   static override description = "List a Sentry organization's issues"
   static override examples = [
@@ -25,7 +26,7 @@ export default class OrgIssues extends Command {
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<ApiResult> {
     const {flags} = await this.parse(OrgIssues)
     const pm = createProfileManager<SentryConfig>(this.config, flags.profile, 'sentry-config.json')
     const auth = await pm.loadAuthConfig()
@@ -49,8 +50,8 @@ export default class OrgIssues extends Command {
 
     if (flags.toon) {
       this.log(formatAsToon(result))
-    } else {
-      this.logJson(result)
     }
+
+    return result
   }
 }

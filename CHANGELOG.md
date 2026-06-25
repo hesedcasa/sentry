@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/hesedcasa/sentry/compare/v0.5.0...v0.5.1) (2026-06-25)
+
+
+### ♻️ Chores
+
+* introduce BaseCommand to centralize run() return and JSON ([#69](https://github.com/hesedcasa/sentry/issues/69)) ([10757a5](https://github.com/hesedcasa/sentry/commit/10757a5d9d4a0f55af64659d7933a7bb9847377e))
+
 ## [0.5.0](https://github.com/hesedcasa/sentry/compare/v0.4.0...v0.5.0) (2026-06-05)
 
 

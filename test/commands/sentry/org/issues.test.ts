@@ -37,7 +37,7 @@ describe('org:issues', () => {
 
     createProfileManagerStub = stub().returns(mockProfileManager)
 
-    const imported = await esmock('../../../../src/commands/sentry/org/issues.js', {
+    const imported = await esmock('../../../../src/commands/sentry/org/index.js', {
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         listOrgIssues: listOrgIssuesStub,

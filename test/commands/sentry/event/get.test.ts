@@ -31,7 +31,7 @@ describe('event:get', () => {
 
     createProfileManagerStub = stub().returns(mockProfileManager)
 
-    const imported = await esmock('../../../../src/commands/sentry/event/get.js', {
+    const imported = await esmock('../../../../src/commands/sentry/event/index.js', {
       '../../../../src/sentry/sentry-client.js': {
         clearClients: clearClientsStub,
         getEvent: getEventStub,

@@ -57,10 +57,18 @@
     "dirname": "sentry",
     "commands": "./dist/commands",
     "topicSeparator": " ",
-    "topics": {},
-    "update": {
-      "autoupdate": {
-        "debounce": 7
+    "topics": {
+      "sentry": {
+        "description": "Commands for managing Sentry workflows and operations"
+      },
+      "sentry:event": {
+        "description": "Get event details or debug source maps"
+      },
+      "sentry:issue": {
+        "description": "Perform various operations on issue"
+      },
+      "sentry:project": {
+        "description": "List project's issues or events"
       }
     }
   },

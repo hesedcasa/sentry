@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/hesedcasa/sentry/compare/v0.5.1...v0.5.2) (2026-06-26)
+
+
+### ♻️ Chores
+
+* rename command files to index.ts and update topics config ([#71](https://github.com/hesedcasa/sentry/issues/71)) ([fad6596](https://github.com/hesedcasa/sentry/commit/fad659694a2151bcc668a66b0f6cb935fa3cba9f))
+
 ## [0.5.1](https://github.com/hesedcasa/sentry/compare/v0.5.0...v0.5.1) (2026-06-25)
 
 

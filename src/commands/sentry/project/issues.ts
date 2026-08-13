@@ -9,11 +9,13 @@ export default class ProjectIssues extends BaseCommand {
   static override args = {
     projectSlug: Args.string({description: 'Project slug', required: true}),
   }
+
   static override description = "List a Sentry project's issues"
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-project',
     '<%= config.bin %> <%= command.id %> my-project --query "is:unresolved"',
   ]
+
   static override flags = {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),

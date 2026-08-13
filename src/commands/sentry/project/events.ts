@@ -9,6 +9,7 @@ export default class ProjectEvents extends BaseCommand {
   static override args = {
     projectSlug: Args.string({description: 'Project slug', required: true}),
   }
+
   static override description = "List a Sentry project's error events"
   static override examples = ['<%= config.bin %> <%= command.id %> my-project']
   static override flags = {

@@ -79,10 +79,10 @@ interface ApiResult {
    - Call `clearClients()` for cleanup
    - Output with `this.logJson(result)` or `this.log(formatAsToon(result))`
 
-**Argument ordering convention:** When the first positional argument is not alphabetically first, wrap the `args` block with eslint-disable comments:
+**Argument ordering convention:** When the first positional argument is not alphabetically first, wrap the `args` block with eslint-disable comments. The `@eslint-community/eslint-comments/require-description` rule requires a `--` description on the disable comment:
 
 ```typescript
-/* eslint-disable perfectionist/sort-objects */
+/* eslint-disable perfectionist/sort-objects -- positional args must stay in CLI order per CLAUDE.md convention */
 static override args = {
   issueId: Args.string({description: 'Issue ID', required: true}),
   eventId: Args.string({description: 'Event ID', required: true}),
@@ -182,8 +182,9 @@ IssueGet = imported.default
 
 ### Linting quirks
 
-- The `camelcase` rule flags snake_case parameter names like `exception_idx`/`frame_idx` in `debugSourceMaps`. Use `// eslint-disable-next-line camelcase` on lines that pass these external API params
 - The `unicorn/no-useless-undefined` rule flags `stub.calledWith(undefined)` — use `stub.firstCall.args[0] === undefined` instead
+- Every `eslint-disable` comment needs a `--` description (`@eslint-community/eslint-comments/require-description`), and unused disable directives are reported as errors
+- `eslint.config.mjs` relaxes the stricter `eslint-config-oclif@7` rules: type-aware rules are disabled for `test/**`, plus targeted per-directory rule overrides for `src/**`. Add new relaxations there rather than sprinkling inline disables
 
 ## Output Formatting
 

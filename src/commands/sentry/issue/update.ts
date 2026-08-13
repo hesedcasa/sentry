@@ -9,11 +9,13 @@ export default class IssueUpdate extends BaseCommand {
   static override args = {
     issueId: Args.string({description: 'Issue ID', required: true}),
   }
+
   static override description = 'Update a Sentry issue'
   static override examples = [
     '<%= config.bin %> <%= command.id %> 123456789 --status resolved',
     '<%= config.bin %> <%= command.id %> 123456789 --assigned-to user@example.com',
   ]
+
   static override flags = {
     'assigned-to': Flags.string({description: 'Assign to user (actor ID or username)', required: false}),
     'has-seen': Flags.boolean({allowNo: true, description: 'Mark issue as seen/unseen', required: false}),

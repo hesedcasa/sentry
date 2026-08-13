@@ -6,12 +6,13 @@ import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, getEvent} from '../../../sentry/sentry-client.js'
 
 export default class EventGet extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- positional args must stay in CLI order per CLAUDE.md convention */
   static override args = {
     projectSlug: Args.string({description: 'Project slug', required: true}),
     eventId: Args.string({description: 'Event ID', required: true}),
   }
   /* eslint-enable perfectionist/sort-objects */
+
   static override description = 'Retrieve a Sentry event for a project'
   static override examples = ['<%= config.bin %> <%= command.id %> my-project abc123def456']
   static override flags = {

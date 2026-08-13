@@ -12,6 +12,7 @@ export default class OrgIssues extends BaseCommand {
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --query "is:unresolved" --limit 50',
   ]
+
   static override flags = {
     cursor: Flags.string({description: 'Pagination cursor', required: false}),
     end: Flags.string({description: 'End date (ISO-8601)', required: false}),

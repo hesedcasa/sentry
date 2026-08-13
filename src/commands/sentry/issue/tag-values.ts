@@ -10,6 +10,7 @@ export default class IssueTagValues extends BaseCommand {
     issueId: Args.string({description: 'Issue ID', required: true}),
     tagKey: Args.string({description: 'Tag key (e.g. browser, url, user)', required: true}),
   }
+
   static override description = "List a tag's values for a Sentry issue"
   static override examples = ['<%= config.bin %> <%= command.id %> 123456789 browser']
   static override flags = {

@@ -2,21 +2,19 @@ import {type ApiResult} from '@hesed/plugin-lib'
 
 import {SentryApi, type SentryConfig} from './sentry-api.js'
 
-let sentryApi: null | SentryApi = null
+let sentryApi: SentryApi | undefined
 
 function initSentry(config: SentryConfig): SentryApi {
-  if (!sentryApi) {
-    sentryApi = new SentryApi(config)
-  }
+  sentryApi ??= new SentryApi(config)
 
   return sentryApi
 }
 
 export function clearClients(): void {
-  if (sentryApi) {
-    sentryApi.clearClients()
-    sentryApi = null
-  }
+  if (!sentryApi) return
+
+  sentryApi.clearClients()
+  sentryApi = undefined
 }
 
 export async function testConnection(config: SentryConfig): Promise<ApiResult> {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/hesedcasa/sentry/compare/v0.5.2...v0.5.3) (2026-08-13)
+
+
+### ♻️ Chores
+
+* upgrade ESLint and fix TypeScript compilation errors ([#86](https://github.com/hesedcasa/sentry/issues/86)) ([66e8523](https://github.com/hesedcasa/sentry/commit/66e8523af6fa269f6fa0159b39096ea37692e3ee))
+
 ## [0.5.2](https://github.com/hesedcasa/sentry/compare/v0.5.1...v0.5.2) (2026-06-26)
 
 

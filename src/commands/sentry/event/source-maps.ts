@@ -6,12 +6,13 @@ import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, debugSourceMaps} from '../../../sentry/sentry-client.js'
 
 export default class EventSourceMaps extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- positional args must stay in CLI order per CLAUDE.md convention */
   static override args = {
     projectSlug: Args.string({description: 'Project slug', required: true}),
     eventId: Args.string({description: 'Event ID', required: true}),
   }
   /* eslint-enable perfectionist/sort-objects */
+
   static override description = 'Debug source maps for a Sentry event'
   static override examples = ['<%= config.bin %> <%= command.id %> my-project abc123def456']
   static override flags = {
@@ -30,9 +31,7 @@ export default class EventSourceMaps extends BaseCommand {
     }
 
     const params: Record<string, unknown> = {}
-    // eslint-disable-next-line camelcase
     if (flags['exception-idx']) params.exception_idx = flags['exception-idx']
-    // eslint-disable-next-line camelcase
     if (flags['frame-idx']) params.frame_idx = flags['frame-idx']
 
     const result = await debugSourceMaps(auth, args.projectSlug, args.eventId, params)

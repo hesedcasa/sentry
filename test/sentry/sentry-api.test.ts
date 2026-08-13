@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {expect} from 'chai'
 import {type SinonStub, stub} from 'sinon'
 
@@ -32,7 +31,7 @@ describe('SentryApi', () => {
 
   describe('request internals', () => {
     it('sends correct Authorization header', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: '1'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: '1'}, {status: 200}))
 
       await api.getIssue('123')
 
@@ -41,7 +40,7 @@ describe('SentryApi', () => {
     })
 
     it('sends Accept: application/json header', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getIssue('123')
 
@@ -50,7 +49,7 @@ describe('SentryApi', () => {
     })
 
     it('uses configured host as base URL', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getIssue('123')
 
@@ -60,7 +59,7 @@ describe('SentryApi', () => {
 
     it('returns success with parsed JSON on 200 response', async () => {
       const responseData = {id: '123', title: 'Test Error'}
-      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+      fetchStub.resolves(Response.json(responseData, {status: 200}))
 
       const result = await api.getIssue('123')
 
@@ -84,7 +83,7 @@ describe('SentryApi', () => {
 
     it('returns error with parsed JSON on non-OK response with JSON body', async () => {
       const errorBody = {detail: 'Not Found'}
-      fetchStub.resolves(new Response(JSON.stringify(errorBody), {status: 404}))
+      fetchStub.resolves(Response.json(errorBody, {status: 404}))
 
       const result = await api.getIssue('nonexistent')
 
@@ -121,7 +120,7 @@ describe('SentryApi', () => {
     })
 
     it('sets Content-Type when body is present', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: '1'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: '1'}, {status: 200}))
 
       await api.updateIssue('123', {status: 'resolved'})
 
@@ -130,7 +129,7 @@ describe('SentryApi', () => {
     })
 
     it('does not set Content-Type when no body is present', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getIssue('123')
 
@@ -141,7 +140,7 @@ describe('SentryApi', () => {
 
   describe('testConnection', () => {
     it('calls GET /organizations/:org/issues/ and returns org info on success', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([{id: '1'}]), {status: 200}))
+      fetchStub.resolves(Response.json([{id: '1'}], {status: 200}))
 
       const result = await api.testConnection()
 
@@ -153,7 +152,7 @@ describe('SentryApi', () => {
     })
 
     it('returns failure when request fails', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({detail: 'Unauthorized'}), {status: 401}))
+      fetchStub.resolves(Response.json({detail: 'Unauthorized'}, {status: 401}))
 
       const result = await api.testConnection()
 
@@ -163,7 +162,7 @@ describe('SentryApi', () => {
 
   describe('getIssue', () => {
     it('calls GET /organizations/:org/issues/:id', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: '123', title: 'Test'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: '123', title: 'Test'}, {status: 200}))
 
       await api.getIssue('123')
 
@@ -175,7 +174,7 @@ describe('SentryApi', () => {
 
   describe('updateIssue', () => {
     it('calls PUT /organizations/:org/issues/:id with body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: '123', status: 'resolved'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: '123', status: 'resolved'}, {status: 200}))
 
       await api.updateIssue('123', {status: 'resolved'})
 
@@ -187,7 +186,7 @@ describe('SentryApi', () => {
     })
 
     it('sends all provided fields in body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.updateIssue('123', {assignedTo: 'user@example.com', hasSeen: true, status: 'resolved'})
 
@@ -201,7 +200,7 @@ describe('SentryApi', () => {
 
   describe('listOrgIssues', () => {
     it('calls GET /organizations/:org/issues/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listOrgIssues()
 
@@ -211,7 +210,7 @@ describe('SentryApi', () => {
     })
 
     it('includes query params when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listOrgIssues({limit: 10, query: 'is:unresolved'})
 
@@ -221,7 +220,7 @@ describe('SentryApi', () => {
     })
 
     it('omits query string when no params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listOrgIssues()
 
@@ -232,7 +231,7 @@ describe('SentryApi', () => {
 
   describe('getIssueEvent', () => {
     it('calls GET /organizations/:org/issues/:issueId/events/:eventId', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 'evt1'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 'evt1'}, {status: 200}))
 
       await api.getIssueEvent('123', 'latest')
 
@@ -244,7 +243,7 @@ describe('SentryApi', () => {
 
   describe('listIssueEvents', () => {
     it('calls GET /organizations/:org/issues/:id/events/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listIssueEvents('123')
 
@@ -253,7 +252,7 @@ describe('SentryApi', () => {
     })
 
     it('includes filter params when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listIssueEvents('123', {full: true, statsPeriod: '24h'})
 
@@ -265,7 +264,7 @@ describe('SentryApi', () => {
 
   describe('listIssueHashes', () => {
     it('calls GET /organizations/:org/issues/:id/hashes/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listIssueHashes('123')
 
@@ -274,7 +273,7 @@ describe('SentryApi', () => {
     })
 
     it('includes cursor when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listIssueHashes('123', {cursor: 'abc'})
 
@@ -285,7 +284,7 @@ describe('SentryApi', () => {
 
   describe('getTagDetails', () => {
     it('calls GET /organizations/:org/issues/:id/tags/:tagKey/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({key: 'browser'}), {status: 200}))
+      fetchStub.resolves(Response.json({key: 'browser'}, {status: 200}))
 
       await api.getTagDetails('123', 'browser')
 
@@ -296,7 +295,7 @@ describe('SentryApi', () => {
 
   describe('listTagValues', () => {
     it('calls GET /organizations/:org/issues/:id/tags/:tagKey/values/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listTagValues('123', 'browser')
 
@@ -307,7 +306,7 @@ describe('SentryApi', () => {
 
   describe('listProjectEvents', () => {
     it('calls GET /projects/:org/:projectSlug/events/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listProjectEvents('my-project')
 
@@ -316,7 +315,7 @@ describe('SentryApi', () => {
     })
 
     it('includes filter params when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listProjectEvents('my-project', {full: true, statsPeriod: '7d'})
 
@@ -328,7 +327,7 @@ describe('SentryApi', () => {
 
   describe('listProjectIssues', () => {
     it('calls GET /projects/:org/:projectSlug/issues/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listProjectIssues('my-project')
 
@@ -337,7 +336,7 @@ describe('SentryApi', () => {
     })
 
     it('includes query when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify([]), {status: 200}))
+      fetchStub.resolves(Response.json([], {status: 200}))
 
       await api.listProjectIssues('my-project', {query: 'is:unresolved'})
 
@@ -348,7 +347,7 @@ describe('SentryApi', () => {
 
   describe('getEvent', () => {
     it('calls GET /projects/:org/:projectSlug/events/:eventId/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 'evt1'}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 'evt1'}, {status: 200}))
 
       await api.getEvent('my-project', 'abc123')
 
@@ -360,7 +359,7 @@ describe('SentryApi', () => {
 
   describe('debugSourceMaps', () => {
     it('calls GET /projects/:org/:projectSlug/events/:eventId/source-map-debug/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.debugSourceMaps('my-project', 'abc123')
 
@@ -369,9 +368,8 @@ describe('SentryApi', () => {
     })
 
     it('includes exception_idx and frame_idx params when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
-      // eslint-disable-next-line camelcase
       await api.debugSourceMaps('my-project', 'abc123', {exception_idx: '0', frame_idx: '2'})
 
       const [url] = fetchStub.firstCall.args

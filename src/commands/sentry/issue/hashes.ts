@@ -9,6 +9,7 @@ export default class IssueHashes extends BaseCommand {
   static override args = {
     issueId: Args.string({description: 'Issue ID', required: true}),
   }
+
   static override description = "List a Sentry issue's hashes"
   static override examples = ['<%= config.bin %> <%= command.id %> 123456789']
   static override flags = {

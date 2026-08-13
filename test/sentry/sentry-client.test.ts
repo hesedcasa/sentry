@@ -193,7 +193,6 @@ describe('sentry-client', () => {
 
   describe('debugSourceMaps', () => {
     it('delegates with projectSlug, eventId, and params', async () => {
-      // eslint-disable-next-line camelcase
       const params = {exception_idx: '0', frame_idx: '2'}
       await debugSourceMapsFn(mockConfig, 'my-project', 'abc123', params)
       expect(mockApiInstance.debugSourceMaps.calledWith('my-project', 'abc123', params)).to.be.true

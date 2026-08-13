@@ -6,17 +6,19 @@ import {type SentryConfig} from '../../../sentry/sentry-api.js'
 import {clearClients, getIssueEvent} from '../../../sentry/sentry-client.js'
 
 export default class IssueEvent extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- positional args must stay in CLI order per CLAUDE.md convention */
   static override args = {
     issueId: Args.string({description: 'Issue ID', required: true}),
     eventId: Args.string({description: 'Event ID (latest, oldest, recommended, or event ID)', required: true}),
   }
   /* eslint-enable perfectionist/sort-objects */
+
   static override description = 'Retrieve a specific event from a Sentry issue'
   static override examples = [
     '<%= config.bin %> <%= command.id %> 123456789 latest',
     '<%= config.bin %> <%= command.id %> 123456789 abc123def456',
   ]
+
   static override flags = {
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),

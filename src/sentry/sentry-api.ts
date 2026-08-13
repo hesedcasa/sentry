@@ -1,6 +1,6 @@
 import {type ApiResult} from '@hesed/plugin-lib'
 
-export interface SentryConfig {
+export type SentryConfig = {
   authToken: string
   host: string
   organization: string
@@ -10,7 +10,7 @@ export interface SentryConfig {
  * Sentry REST API client
  */
 export class SentryApi {
-  private config: SentryConfig
+  private readonly config: SentryConfig
 
   constructor(config: SentryConfig) {
     this.config = config
@@ -19,7 +19,9 @@ export class SentryApi {
   /**
    * Clear client (no persistent client for REST API)
    */
-  clearClients(): void {}
+  clearClients(): void {
+    // No persistent client to dispose — kept for parity with other API clients.
+  }
 
   /**
    * Debug source maps for a project event
@@ -222,7 +224,6 @@ export class SentryApi {
         headers['Content-Type'] = 'application/json'
       }
 
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
       const response = await fetch(url, {
         body: options?.body,
         headers,

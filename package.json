@@ -29,7 +29,7 @@
     "eslint-config-prettier": "^10",
     "esmock": "^2.7.3",
     "mocha": "^12",
-    "oclif": "^5",
+    "oclif": "^6",
     "prettier": "^3.8.1",
     "sdkck": "0.36.3",
     "shx": "^0.4.0",

@@ -7,7 +7,8 @@
 /node_modules
 oclif.manifest.json
 
-
+# Local credentials for the e2e suite (see test/e2e/ and .env.example).
+.env
 
 yarn.lock
 pnpm-lock.yaml

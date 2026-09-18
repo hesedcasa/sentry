@@ -52,15 +52,19 @@ jobs:
       # token to see exactly one.
       - name: Run end-to-end tests
         run: npm run e2e:mocha
+        # Step-level timeout, not just the job's: a hung test run cancels only
+        # this step, so the always() sweep below still runs. The job-level
+        # timeout stays as the outer backstop for everything else.
+        timeout-minutes: 20
         env:
           SENTRY_API_KEY: ${{ secrets.SENTRY_API_KEY }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           E2E_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
 
-      # `always()`, so a killed mocha run (the job timeout above skips its
-      # `after` hooks) still gets its sandboxes reclaimed. E2E_RUN_ID is what
-      # makes that possible: it pins this run's sandbox name so the sweep can
-      # delete this run's projects, not just the ones older than an hour.
+      # `always()`, so a killed mocha run (the step or job timeout above skips
+      # its `after` hooks) still gets its sandboxes reclaimed. E2E_RUN_ID is
+      # what makes that possible: it pins this run's sandbox name so the sweep
+      # can delete this run's projects, not just the ones older than an hour.
       - name: Sweep leftover sandboxes
         if: always()
         run: npm run e2e:sweep

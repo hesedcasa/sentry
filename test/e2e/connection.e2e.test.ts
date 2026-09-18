@@ -48,7 +48,13 @@ describe('e2e: connection', () => {
   it('errors on an unknown profile rather than falling back to the default', async () => {
     const {code, stdout} = await runCli(['sentry', 'org', '--profile', 'nosuch'], configDir)
     expect(code).to.equal(1)
-    expect(JSON.parse(stdout)).to.deep.equal({error: 'Missing authentication config.'})
+
+    // Structured presence only, per the e2e conventions: pinning the exact
+    // error wording here would fail on a harmless message change. A payload
+    // carrying an error — instead of the default profile's issue listing —
+    // is what proves there was no silent fallback.
+    const payload = JSON.parse(stdout) as {error?: unknown}
+    expect(payload.error, 'unknown profile should error, not fall back').to.be.a('string').that.is.not.empty
   })
 
   // Pinned as observed, not as desired. Unlike the reference Jira CLI, a

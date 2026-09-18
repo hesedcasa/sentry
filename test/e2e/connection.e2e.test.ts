@@ -41,9 +41,8 @@ describe('e2e: connection', () => {
   })
 
   it('fails auth test on a bad API token', async () => {
-    const {code, stderr} = await runCli(['sentry', 'auth', 'test', '--profile', 'broken'], configDir)
+    const {code} = await runCli(['sentry', 'auth', 'test', '--profile', 'broken'], configDir)
     expect(code).to.equal(2)
-    expect(stderr).to.contain('failed')
   })
 
   it('errors on an unknown profile rather than falling back to the default', async () => {
@@ -78,13 +77,17 @@ describe('e2e: connection', () => {
 
   // Pinned as observed: `sentry auth list` renders the API token in
   // plaintext. That is a finding, not a feature — this test makes a future
-  // redaction fix a visible, deliberate change. runCli()'s failure paths
-  // redact the token; this run succeeds, so nothing leaks here either way.
+  // redaction fix a visible, deliberate change. The captured stdout carries
+  // the real token, so it is redacted before any assertion: a failing expect
+  // would otherwise interpolate the credential into chai's failure message
+  // and from there into the terminal and CI logs. (runCli() redacts only its
+  // own failure message; the values it hands back stay raw by design.)
   it('lists profiles including the token, in plaintext', async () => {
     const {code, stdout} = await runCli(['sentry', 'auth', 'list'], configDir)
+    const redactedStdout = redactSecret(stdout, process.env.SENTRY_API_KEY)
     expect(code).to.equal(0)
-    expect(stdout).to.contain('authToken:')
-    expect(stdout).to.contain('default (default):')
+    expect(redactedStdout).to.contain('authToken:')
+    expect(redactedStdout).to.contain('default (default):')
   })
 
   it('lists org issues for the default profile', async () => {

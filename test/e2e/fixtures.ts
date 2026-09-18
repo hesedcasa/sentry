@@ -37,14 +37,15 @@ export type SeededIssue = {
   title: string
 }
 
-type SentryResponse = {body: unknown; status: number}
+type SentryResponse = {body: unknown; link: string | undefined; status: number}
 
 /**
  * Sandboxes created by this process, as a fallback for `cleanupRun`.
  *
  * The organization project listing has no indexing lag, but listing by name in
- * a different process (the post-run sweep) can only match the run name — the
- * tracked set is what makes cleanup exact for this process.
+ * a different process (the post-run sweep) can only match the run name and its
+ * suffixed variants — the tracked set is what makes cleanup exact for this
+ * process.
  */
 const created = new Set<string>()
 
@@ -62,7 +63,34 @@ async function call(method: string, endpoint: string, body?: unknown): Promise<S
   })
 
   const text = await response.text()
-  return {body: text ? JSON.parse(text) : null, status: response.status}
+  return {
+    body: text ? JSON.parse(text) : null,
+    link: response.headers.get('link') ?? undefined,
+    status: response.status,
+  }
+}
+
+/**
+ * Extracts the next page's cursor from a Sentry `Link` response header, or
+ * undefined when the response is the last page.
+ *
+ * Sentry paginates with a header shaped like:
+ * `<https://sentry.io/api/0/...?cursor=0:100:0>; rel="next"; results="true"`.
+ * The `results` attribute is the real end-of-pages signal: the final page's
+ * response still carries a `rel="next"` link, but marked `results="false"` —
+ * following that one anyway would request the same empty page forever.
+ */
+function nextCursor(link: string | undefined): string | undefined {
+  if (!link) return undefined
+
+  for (const part of link.split(',')) {
+    if (!part.includes('rel="next"') || part.includes('results="false"')) continue
+
+    const url = /<([^>]+)>/.exec(part)?.[1]
+    return url ? (new URL(url).searchParams.get('cursor') ?? undefined) : undefined
+  }
+
+  return undefined
 }
 
 /**
@@ -171,7 +199,10 @@ export async function seedEvent(
  */
 export async function waitForIssues(projectSlug: string, expected: number): Promise<SeededIssue[]> {
   const organization = await resolveOrg()
-  const deadline = Date.now() + 60_000
+  // Below mocha's 60-second per-test timeout (package.json): this deadline
+  // must lose the race against it on purpose, so a slow ingest surfaces as
+  // this descriptive error instead of a generic "timeout of 60000ms exceeded".
+  const deadline = Date.now() + 45_000
   let issues: SeededIssue[] = []
 
   while (Date.now() < deadline) {
@@ -305,16 +336,26 @@ export async function deleteSandbox(projectSlug: string): Promise<void> {
 
 /**
  * Deletes every sandbox created by this process, plus any project carrying
- * this run's name.
+ * this run's name or one of its suffixed per-suite variants (`RUN_NAME-read`,
+ * `RUN_NAME-lifecycle`, …).
  *
  * The name-based half still matters — with E2E_RUN_ID set, a sweep running in
  * a different process than mocha has an empty `created` set and the run name
- * is all it has to go on.
+ * is all it has to go on. Matching the suffixed variants is what keeps a
+ * killed mocha's per-suite sandboxes from outliving the immediate post-run
+ * sweep and waiting out the one-hour stale cutoff instead.
  */
 export async function cleanupRun(): Promise<void> {
   const slugs = new Set(created)
   for (const project of await listSandboxProjects()) {
-    if (project.slug === RUN_NAME || project.name === RUN_NAME) slugs.add(project.slug)
+    if (
+      project.slug === RUN_NAME ||
+      project.slug.startsWith(`${RUN_NAME}-`) ||
+      project.name === RUN_NAME ||
+      project.name.startsWith(`${RUN_NAME}-`)
+    ) {
+      slugs.add(project.slug)
+    }
   }
 
   for (const slug of slugs) {
@@ -351,15 +392,30 @@ export async function sweepStale(): Promise<number> {
  * with no other guard, so filtering every lookup to the prefix here —
  * structurally, once — bounds their blast radius to sandboxes instead of every
  * project the credentials can see.
+ *
+ * Follows every page: a single-page read would make sandboxes beyond the
+ * first page invisible to both run cleanup and stale sweeping.
  */
 async function listSandboxProjects(): Promise<Array<{dateCreated: string; name: string; slug: string}>> {
   const organization = await resolveOrg()
-  const {body, status} = await call('GET', `/organizations/${organization}/projects/`)
-  if (status !== 200) {
-    throw new Error(`listSandboxProjects failed: ${status} ${JSON.stringify(body)}`)
-  }
+  const sandboxes: Array<{dateCreated: string; name: string; slug: string}> = []
+  let cursor: string | undefined
 
-  return (body as Array<{dateCreated: string; name: string; slug: string}>).filter((project) =>
-    project.slug.startsWith(RUN_PREFIX),
-  )
+  do {
+    const query = cursor === undefined ? '' : `?cursor=${encodeURIComponent(cursor)}`
+    // eslint-disable-next-line no-await-in-loop -- pagination is inherently sequential: each page's cursor comes from the previous response
+    const {body, link, status} = await call('GET', `/organizations/${organization}/projects/${query}`)
+    if (status !== 200) {
+      throw new Error(`listSandboxProjects failed: ${status} ${JSON.stringify(body)}`)
+    }
+
+    sandboxes.push(
+      ...(body as Array<{dateCreated: string; name: string; slug: string}>).filter((project) =>
+        project.slug.startsWith(RUN_PREFIX),
+      ),
+    )
+    cursor = nextCursor(link)
+  } while (cursor !== undefined)
+
+  return sandboxes
 }

@@ -188,9 +188,7 @@ IssueGet = imported.default
 
 ### End-to-end tests
 
-`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live
-Sentry organization. It is excluded from `npm test` and needs credentials
-exported first, because nothing in this repo loads `.env`:
+`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live Sentry organization. It is excluded from `npm test` and needs credentials exported first, because nothing in this repo loads `.env`:
 
 ```bash
 set -a; . ./.env; set +a
@@ -200,43 +198,23 @@ npm run e2e:mocha             # run without rebuilding
 npm run e2e:sweep             # delete sandboxes older than an hour
 ```
 
-`e2e:sweep` also deletes the _current_ run's sandboxes when `E2E_RUN_ID` is set
-— `scripts/e2e.sh` and the CI workflow both set it, so a mocha killed before
-its `after` hooks ran (a job timeout, a local Ctrl-C) still gets cleaned up
-instead of waiting an hour for the stale sweep to reach it.
+`e2e:sweep` also deletes the _current_ run's sandboxes when `E2E_RUN_ID` is set — `scripts/e2e.sh` and the CI workflow both set it, so a mocha killed before its `after` hooks ran (a job timeout, a local Ctrl-C) still gets cleaned up instead of waiting an hour for the stale sweep to reach it.
 
 Rules specific to this suite:
 
-- **Fixtures are created with raw `fetch` in `test/e2e/fixtures.ts`, never
-  through the CLI** — they are the oracle the CLI is checked against. Events
-  are ingested through the project's default client-key DSN (the envelope
-  endpoint rejects bearer tokens).
-- **Every sandbox is named `e2e-sandbox-<run id>`** (plus a per-file suffix).
-  Both cleanup paths filter the org project listing by that prefix —
-  structurally, once — so nothing outside `e2e-sandbox-*` is ever created or
-  deleted. Deleting the project is the cleanup: Sentry has no issue-delete API.
-- **Seeded events must differ in their exception value**, or Sentry groups
-  them into one issue. Issue grouping and the issue's event listing stabilize
-  at slightly different times — tests poll via `waitForIssues` /
-  `waitForIssueEvents` rather than reading once.
-- **Never assert on error message text.** Assert on exit codes, `success`,
-  and the API `detail` substring.
-- **Assignment keys on the user id** — `--assigned-to user:<user id>`, from
-  the nested `user.id` of `/organizations/{org}/users/`, not the member id.
+- **Fixtures are created with raw `fetch` in `test/e2e/fixtures.ts`, never through the CLI** — they are the oracle the CLI is checked against. Events are ingested through the project's default client-key DSN (the envelope endpoint rejects bearer tokens).
+- **Every sandbox is named `e2e-sandbox-<run id>`** (plus a per-file suffix). Both cleanup paths filter the org project listing by that prefix — structurally, once — so nothing outside `e2e-sandbox-*` is ever created or deleted. Deleting the project is the cleanup: Sentry has no issue-delete API.
+- **Seeded events must differ in their exception value**, or Sentry groups them into one issue. Issue grouping and the issue's event listing stabilize at slightly different times — tests poll via `waitForIssues` / `waitForIssueEvents` rather than reading once.
+- **Never assert on error message text.** Assert on exit codes, `success`, and the API `detail` substring.
+- **Assignment keys on the user id** — `--assigned-to user:<user id>`, from the nested `user.id` of `/organizations/{org}/users/`, not the member id.
 
-Pinned-as-observed CLI behaviour (deliberate-change markers, not bugs to work
-around silently):
+Pinned-as-observed CLI behaviour (deliberate-change markers, not bugs to work around silently):
 
-- API failures carry `success: false` in the JSON payload but still **exit 0**
-  (`sentry org --profile broken` → `{error: {detail: 'Invalid token'},
-  success: false}`).
-- `sentry issue update` prints nothing in JSON mode; success is read from the
-  exit code plus a read-back.
-- `sentry project events` answers `[]` for envelope-ingested error events even
-  when the same event is visible via the issue it grouped into.
+- API failures carry `success: false` in the JSON payload but still **exit 0** (`sentry org --profile broken` → `{error: {detail: 'Invalid token'}, success: false}`).
+- `sentry issue update` prints nothing in JSON mode; success is read from the exit code plus a read-back.
+- `sentry project events` answers `[]` for envelope-ingested error events even when the same event is visible via the issue it grouped into.
 - `sentry auth list` renders the API token in plaintext.
-- `sentry org issues --cursor` is not surfaced in the payload, so pagination
-  round-trips are untestable end-to-end; `--limit` is covered instead.
+- `sentry org issues --cursor` is not surfaced in the payload, so pagination round-trips are untestable end-to-end; `--limit` is covered instead.
 
 ## Output Formatting
 

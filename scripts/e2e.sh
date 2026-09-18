@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the end-to-end suite against the live Sentry organization — twice: once
-# through the built standalone CLI, then again through the latest sdkck host
+# through the built standalone CLI, then again through the pinned sdkck host
 # CLI with this build packed and installed as its @hesed/sentry plugin.
 #
 # Nothing in this repo loads .env, so export the credentials first:
@@ -91,10 +91,15 @@ run_mocha
 
 # Second leg: the same suite through the sdkck host CLI, with this build
 # installed as its @hesed/sentry plugin.
-echo "==> Downloading the latest sdkck"
-# --no-save resolves "latest" from the registry on every run without touching
-# package.json; the binary comes from node_modules/.bin.
-npm install --silent --no-save sdkck
+echo "==> Locating the pinned sdkck"
+# sdkck is a pinned devDependency: only reviewed, lockfile-integrity-checked
+# releases of it ever run in an environment that carries SENTRY_API_KEY.
+# `npm install`/`npm ci` put the binary in node_modules/.bin.
+SDKCK_BIN="$PWD/node_modules/.bin/sdkck"
+if [ ! -x "$SDKCK_BIN" ]; then
+  echo "error: sdkck not found at node_modules/.bin/sdkck — run npm install first" >&2
+  exit 1
+fi
 export PATH="$PWD/node_modules/.bin:$PATH"
 
 # A throwaway sdkck home keeps the plugin install, its config and its caches

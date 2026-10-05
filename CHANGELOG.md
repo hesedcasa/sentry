@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.4](https://github.com/hesedcasa/sentry/compare/v0.5.3...v0.5.4) (2026-10-05)
+
+
+### 🛠️ Fixes
+
+* **ci:** harden the e2e workflow and test against the latest sdkck ([#115](https://github.com/hesedcasa/sentry/issues/115)) ([2f3500b](https://github.com/hesedcasa/sentry/commit/2f3500b757547e11a643b720b5c0a769f90182aa))
+* **ci:** keep install-time edits and the client secret away from credentials ([#114](https://github.com/hesedcasa/sentry/issues/114)) ([93d80cf](https://github.com/hesedcasa/sentry/commit/93d80cf77e211f784ea7f0da8ecbf25fbf2398d0))
+
 ## [0.5.3](https://github.com/hesedcasa/sentry/compare/v0.5.2...v0.5.3) (2026-08-13)
 
 

@@ -197,7 +197,7 @@ infisical run -- npm run e2e:mocha             # run without rebuilding
 infisical run -- npm run e2e:sweep             # delete sandboxes older than an hour
 ```
 
-In CI, the build job (no OIDC permission) runs `npm ci`, the build and the sdkck plugin install, then hands the workspace to the test job as a tarball artifact; only the test job gets `id-token: write` and fetches the credentials from Infisical over GitHub OIDC (repo variables `INFISICAL_IDENTITY_ID` and `INFISICAL_PROJECT_SLUG`), and nothing in it installs packages.
+In CI, the build job (no OIDC permission) runs `npm ci`, the build and the sdkck plugin install, then hands only `node_modules`, `dist` and the sdkck home to the test job as a tarball artifact; the test job checks the commit out fresh — so an install script that edits tracked files cannot get them run with credentials — and is the only job that gets `id-token: write`; it fetches the credentials from Infisical over GitHub OIDC (repo variables `INFISICAL_IDENTITY_ID` and `INFISICAL_PROJECT_SLUG`), and nothing in it installs packages.
 
 `e2e:sweep` also deletes the _current_ run's sandboxes when `E2E_RUN_ID` is set — `scripts/e2e.sh` and the CI workflow both set it, so a mocha killed before its `after` hooks ran (a job timeout, a local Ctrl-C) still gets cleaned up instead of waiting an hour for the stale sweep to reach it.
 

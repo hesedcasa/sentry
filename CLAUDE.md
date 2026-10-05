@@ -188,15 +188,16 @@ IssueGet = imported.default
 
 ### End-to-end tests
 
-`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live Sentry organization. `npm run test:e2e` then reruns the same suite through the sdkck host CLI (pinned as an exact devDependency — only reviewed, lockfile-verified sdkck releases run with the credentials) with the current build packed and installed as its `@hesed/sentry` plugin — the host switch (`E2E_HOST_CLI=sdkck` + `E2E_SDKCK_HOME`, set by `scripts/e2e.sh` and the CI workflow) lives in `test/e2e/helpers.ts`; the plugin must be installed before any `sdkck sentry` call, or sdkck auto-installs the published release, and the tarball must be a `file:` URL (bare paths read as GitHub org/repo). It is excluded from `npm test` and needs credentials exported first, because nothing in this repo loads `.env`:
+`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live Sentry organization. `npm run test:e2e` then reruns the same suite through the sdkck host CLI (pinned as an exact devDependency — only reviewed, lockfile-verified sdkck releases run with the credentials) with the current build packed and installed as its `@hesed/sentry` plugin — the host switch (`E2E_HOST_CLI=sdkck` + `E2E_SDKCK_HOME`, set by `scripts/e2e.sh` and the CI workflow) lives in `test/e2e/helpers.ts`; the plugin must be installed before any `sdkck sentry` call, or sdkck auto-installs the published release, and the tarball must be a `file:` URL (bare paths read as GitHub org/repo). It is excluded from `npm test`. **Credentials live in Infisical, not in `.env`** (never commit a token) — nothing in this repo loads `.env`, and `.infisical.json` links the repo to the Infisical project. `scripts/e2e.sh` re-runs itself under `infisical run` when `SENTRY_API_KEY` isn't exported — signed in by a one-time `infisical login`, or headless (an E2B sandbox) by a machine identity's `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID`/`_CLIENT_SECRET`, with `--projectId` read from `.infisical.json` — but the other scripts need the wrapper:
 
 ```bash
-set -a; . ./.env; set +a
-npm run test:e2e              # build, run, then sweep
-npm run test:e2e -- --keep    # leave sandboxes behind for inspection
-npm run e2e:mocha             # run without rebuilding
-npm run e2e:sweep             # delete sandboxes older than an hour
+npm run test:e2e                               # build, run, then sweep
+npm run test:e2e -- --keep                     # leave sandboxes behind for inspection
+infisical run -- npm run e2e:mocha             # run without rebuilding
+infisical run -- npm run e2e:sweep             # delete sandboxes older than an hour
 ```
+
+In CI, the build job (no OIDC permission) runs `npm ci`, the build and the sdkck plugin install, then hands the workspace to the test job as a tarball artifact; only the test job gets `id-token: write` and fetches the credentials from Infisical over GitHub OIDC (repo variables `INFISICAL_IDENTITY_ID` and `INFISICAL_PROJECT_SLUG`), and nothing in it installs packages.
 
 `e2e:sweep` also deletes the _current_ run's sandboxes when `E2E_RUN_ID` is set — `scripts/e2e.sh` and the CI workflow both set it, so a mocha killed before its `after` hooks ran (a job timeout, a local Ctrl-C) still gets cleaned up instead of waiting an hour for the stale sweep to reach it.
 

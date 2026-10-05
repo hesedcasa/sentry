@@ -21,7 +21,7 @@ export type CliResult = {
 /**
  * Reads the sandbox credentials from the environment.
  *
- * Nothing in this repo loads .env, so these must already be exported.
+ * They come from Infisical, so run under `infisical run --`.
  *
  * @returns The API token and the Sentry API root.
  */
@@ -29,9 +29,7 @@ export function requireEnv(): {apiToken: string; host: string} {
   const apiToken = process.env.SENTRY_API_KEY
 
   if (!apiToken) {
-    throw new Error(
-      'Missing SENTRY_API_KEY. Nothing in this repo loads .env — run: set -a; . ./.env; set +a',
-    )
+    throw new Error('Missing SENTRY_API_KEY. Run under Infisical: infisical run -- npm run test:e2e')
   }
 
   const host = process.env.SENTRY_HOST || SENTRY_API_ROOT
@@ -144,9 +142,7 @@ function hostInvocation(
   if (process.env.E2E_HOST_CLI === 'sdkck') {
     const home = process.env.E2E_SDKCK_HOME
     if (!home) {
-      throw new Error(
-        'E2E_HOST_CLI=sdkck requires E2E_SDKCK_HOME — set by scripts/e2e.sh or the CI workflow',
-      )
+      throw new Error('E2E_HOST_CLI=sdkck requires E2E_SDKCK_HOME — set by scripts/e2e.sh or the CI workflow')
     }
 
     return {

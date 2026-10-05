@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the end-to-end suite against the live Sentry organization — twice: once
-# through the built standalone CLI, then again through the pinned sdkck host
+# through the built standalone CLI, then again through the latest sdkck host
 # CLI with this build packed and installed as its @hesed/sentry plugin.
 #
 # The credentials come from Infisical: when they aren't already exported, the
@@ -110,22 +110,22 @@ run_mocha() {
 }
 
 echo "==> Building the CLI"
-npm run build
+# The build and the pack below run repository and dependency scripts that never
+# need the credentials, so they are stripped there as for the sdkck installs.
+env -u SENTRY_API_KEY -u SENTRY_ORG npm run build
 
 echo "==> Running end-to-end tests against ${SENTRY_HOST:-https://sentry.io}"
 run_mocha
 
 # Second leg: the same suite through the sdkck host CLI, with this build
 # installed as its @hesed/sentry plugin.
-echo "==> Locating the pinned sdkck"
-# sdkck is a pinned devDependency: only reviewed, lockfile-integrity-checked
-# releases of it ever run in an environment that carries SENTRY_API_KEY.
-# `npm install`/`npm ci` put the binary in node_modules/.bin.
-SDKCK_BIN="$PWD/node_modules/.bin/sdkck"
-if [ ! -x "$SDKCK_BIN" ]; then
-  echo "error: sdkck not found at node_modules/.bin/sdkck — run npm install first" >&2
-  exit 1
-fi
+echo "==> Downloading the latest sdkck"
+# --no-save resolves "latest" from the registry on every run without touching
+# package.json; the binary comes from node_modules/.bin. The install runs with
+# the credentials stripped from the environment: a lifecycle script of the
+# freshly fetched package is arbitrary code from a mutable release, and never
+# needs them.
+env -u SENTRY_API_KEY -u SENTRY_ORG npm install --silent --no-save sdkck
 export PATH="$PWD/node_modules/.bin:$PATH"
 
 # A throwaway sdkck home keeps the plugin install, its config and its caches
@@ -140,15 +140,19 @@ echo "==> Packing the current build and installing it as an sdkck plugin"
 # the real install artifact, not just the working tree. Packing straight into
 # the throwaway home keeps the tarball out of the repo root; the EXIT trap
 # removes it with the rest of the home.
-TGZ="$(npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
+TGZ="$(env -u SENTRY_API_KEY -u SENTRY_ORG \
+  npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
 
 # Installing here — before any `sdkck sentry` invocation — stops sdkck's
 # first-use auto-installer from pulling the published @hesed/sentry release
 # over the build under test. The tarball must be passed as a `file:` URL:
 # sdkck resolves any bare path containing a slash as a GitHub org/repo.
-SDKCK_CACHE_DIR="$SDKCK_HOME/cache" \
-SDKCK_CONFIG_DIR="$SDKCK_HOME/config" \
-SDKCK_DATA_DIR="$SDKCK_HOME/data" \
+# Credentials are stripped here too: the install handles a local tarball and
+# needs none, so the mocha legs are the only steps that hold them under sdkck.
+env -u SENTRY_API_KEY -u SENTRY_ORG \
+  SDKCK_CACHE_DIR="$SDKCK_HOME/cache" \
+  SDKCK_CONFIG_DIR="$SDKCK_HOME/config" \
+  SDKCK_DATA_DIR="$SDKCK_HOME/data" \
   sdkck plugins install "file:$SDKCK_HOME/$TGZ"
 
 echo "==> Running end-to-end tests via sdkck"

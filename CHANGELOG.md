@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/hesedcasa/sentry/compare/v0.5.4...v0.5.5) (2026-10-18)
+
+
+### 🛠️ Fixes
+
+* require @oclif/core 5.1.8 and expect exit 2 for an unknown profile ([#127](https://github.com/hesedcasa/sentry/issues/127)) ([212fb29](https://github.com/hesedcasa/sentry/commit/212fb2953e9e64ffa1d8121ba6f1bd8f030e37ee))
+
 ## [0.5.4](https://github.com/hesedcasa/sentry/compare/v0.5.3...v0.5.4) (2026-10-05)
 
 

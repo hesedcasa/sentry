@@ -47,7 +47,9 @@ describe('e2e: connection', () => {
 
   it('errors on an unknown profile rather than falling back to the default', async () => {
     const {code, stdout} = await runCli(['sentry', 'org', '--profile', 'nosuch'], configDir)
-    expect(code).to.equal(1)
+    // this.error()'s default exit is 2; since @oclif/core 5.1.8 it survives
+    // JSON mode too (it used to become 1).
+    expect(code).to.equal(2)
 
     // Structured presence only, per the e2e conventions: pinning the exact
     // error wording here would fail on a harmless message change. A payload
